@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, user-scalable=yes, initial-scale=0.3, maxmum-scale=1.0, minimum-scale=0.3">
+    <title>DNA Mutations Teaching Tool</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            width: 80%;
+            margin: auto;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .sequence-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 30px;
+            font-size: 24px;
+        }
+        .sequence {
+            display: flex;
+            margin: 5px;
+            justify-content: center;
+        }
+        .base {
+            padding: 10px;
+            margin: 2px;
+            border-radius: 5px;
+            user-select: none;
+            display: inline-block;
+            width: 35px;
+            text-align: center;
+        }
+        .A { background-color: #3498db; }
+        .T { background-color: #e74c3c; }
+        .C { background-color: #2ecc71; }
+        .G { background-color: #f39c12; }
+        .U { background-color: #9b59b6; color: white; } /* Color for U */
+        .line {
+            height: 1px;
+            width: 110%;
+            background-color: #888;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+        .amino-acid-row {
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        .amino-acid {
+            text-align: center;
+            margin: 0 5px;
+            font-size: 20px;
+            font-weight: bold;
+            width: 120px;
+            padding: 5px;
+            border: 2px solid #3498db;
+            border-radius: 5px;
+            background-color: #ecf0f1;
+        }
+        .mutate-panel {
+            display: flex;
+            justify-content: center;
+            margin-top: 30px;
+        }
+        .mutate-button {
+            margin: 0 20px;
+            padding: 10px 20px;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .mutate-button:hover {
+            background-color: #c0392b;
+        }
+        .input-panel {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .base-wrapper {
+            display: flex;
+            justify-content: center;
+            gap: 15px; /* Increase gap between bases */
+        }
+        .codon-group {
+            display: flex;
+            justify-content: center;
+            gap: 10px; /* Add a small gap between codons */
+        }
+        /* mRNA display styling */
+        .mRNA-wrapper {
+            display: flex;
+            justify-content: center;
+            gap: 15px; /* Add spacing between mRNA bases */
+        }
+        .mRNA-base {
+            width: 35px;
+            height: 35px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 5px;
+            background-color: #ecf0f1;
+            font-weight: bold;
+            margin-right: 10px; /* Add space between every 3 bases */
+        }
+        .mRNA-base.U {
+            background-color: #9b59b6;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>DNA Mutations Teaching Tool</h1>
+            <p>Explore how DNA mutations affect amino acid sequences.</p>
+        </div>
+
+        <!-- DNA Sequence Input -->
+        <div class="input-panel">
+            <button class="mutate-button" onclick="setDNASequence()">输入DNA序列</button>
+        </div>
+
+        <!-- DNA Sequences and mRNA Display -->
+        <div class="sequence-container">
+            <!-- Display DNA Sequence 1 -->
+            <div class="sequence" id="dna-sequence-1"></div>
+            <!-- Line to connect -->
+            <div class="line"></div>
+            <!-- Display DNA Sequence 2 (complementary) -->
+            <div class="sequence" id="dna-sequence-2"></div>
+            <!-- Line for mRNA -->
+            <div class="line"></div>
+            <!-- Display mRNA Sequence -->
+            <div class="mRNA-wrapper" id="mRNA-sequence"></div>
+            <!-- Line for Amino Acids -->
+            <div id="amino-acids-row" class="amino-acid-row"></div>
+        </div>
+
+        <!-- Mutation Control Panel -->
+        <div class="mutate-panel">
+            <button class="mutate-button" onclick="insertBase()">插入</button>
+            <button class="mutate-button" onclick="deleteBase()">缺失</button>
+            <button class="mutate-button" onclick="replaceBase()">替换</button>
+        </div>
+    </div>
+
+    <script>
+        // Initialize with a default DNA sequence (can be changed by user input)
+        let dnaSequence1 = ['G', 'G', 'T', 'G', 'G', 'C', 'G', 'A', 'G', 'G', 'A', 'A', 'G', 'T', 'G', 'A', 'C', 'G', 'T', 'G', 'G', 'T'];
+        let dnaSequence2 = complementSequence(dnaSequence1); // Automatically generate complementary sequence
+
+        // Codon to Amino Acid mapping
+        const codonTable = {
+            'UUU': 'Phenylalanine', 'UUC': 'Phenylalanine', 'UUA': 'Leucine', 'UUG': 'Leucine',
+            'CUU': 'Leucine', 'CUC': 'Leucine', 'CUA': 'Leucine', 'CUG': 'Leucine',
+            'AUU': 'Isoleucine', 'AUC': 'Isoleucine', 'AUA': 'Isoleucine', 'AUG': 'Methionine [Start]',
+            'GUU': 'Valine', 'GUC': 'Valine', 'GUA': 'Valine', 'GUG': 'Valine',
+            'UCU': 'Serine', 'UCC': 'Serine', 'UCA': 'Serine', 'UCG': 'Serine',
+            'CCU': 'Proline', 'CCC': 'Proline', 'CCA': 'Proline', 'CCG': 'Proline',
+            'ACU': 'Threonine', 'ACC': 'Threonine', 'ACA': 'Threonine', 'ACG': 'Threonine',
+            'GCU': 'Alanine', 'GCC': 'Alanine', 'GCA': 'Alanine', 'GCG': 'Alanine',
+            'UAU': 'Tyrosine', 'UAC': 'Tyrosine', 'UAA': 'Stop', 'UAG': 'Stop',
+            'CAU': 'Histidine', 'CAC': 'Histidine', 'CAA': 'Glutamine', 'CAG': 'Glutamine',
+            'AAU': 'Asparagine', 'AAC': 'Asparagine', 'AAA': 'Lysine', 'AAG': 'Lysine',
+            'GAU': 'Aspartic acid', 'GAC': 'Aspartic acid', 'GAA': 'Glutamic acid', 'GAG': 'Glutamic acid',
+            'GGU': 'Glycine', 'GGC': 'Glycine', 'GGA': 'Glycine', 'GGG': 'Glycine', 'AGC': 'Serine', 'AGU': 'Serine', 'UGG': 'Tryptophan'
+        };
+
+        // Function to set DNA sequence from user input
+        function setDNASequence() {
+            let userSequence = prompt("Enter DNA sequence (only A, T, C, G):");
+            if (userSequence) {
+                dnaSequence1 = userSequence.split('');
+                dnaSequence2 = complementSequence(dnaSequence1); // Update complementary sequence
+                displaySequences();
+            }
+        }
+
+        // Display the DNA sequences, complementary sequence, and mRNA
+        function displaySequences() {
+            // Display DNA Sequence 1
+            document.getElementById('dna-sequence-1').innerHTML = '';
+            dnaSequence1.forEach(base => {
+                let baseElement = document.createElement('div');
+                baseElement.classList.add('base', base);
+                baseElement.textContent = base;
+                document.getElementById('dna-sequence-1').appendChild(baseElement);
+            });
+
+            // Display DNA Sequence 2 (complementary)
+            document.getElementById('dna-sequence-2').innerHTML = '';
+            dnaSequence2.forEach(base => {
+                let baseElement = document.createElement('div');
+                baseElement.classList.add('base', base);
+                baseElement.textContent = base;
+                document.getElementById('dna-sequence-2').appendChild(baseElement);
+            });
+
+            // Display mRNA Sequence
+            let mRNA = dnaToMRNA(dnaSequence1);
+            document.getElementById('mRNA-sequence').innerHTML = '';
+            mRNA.forEach(base => {
+                let baseElement = document.createElement('div');
+                baseElement.classList.add('mRNA-base');
+                baseElement.textContent = base;
+                if (base === 'U') {
+                    baseElement.classList.add('U'); // Add special class for U
+                }
+                document.getElementById('mRNA-sequence').appendChild(baseElement);
+            });
+
+            // Display Amino Acids
+            updateAminoAcids(mRNA);
+        }
+
+        // Convert DNA sequence to mRNA (T becomes U)
+        function dnaToMRNA(dna) {
+            return dna.map(base => {
+                if (base === 'T') return 'U';
+                return base;
+            });
+        }
+
+        // Update amino acids row corresponding to the mRNA sequence
+        function updateAminoAcids(mRNA) {
+            const aminoAcidContainer = document.getElementById('amino-acids-row');
+            aminoAcidContainer.innerHTML = '';
+
+            // Process each codon (three bases at a time)
+            for (let i = 0; i < mRNA.length; i += 3) {
+                const codon = mRNA.slice(i, i + 3).join('');
+                const aminoAcid = codonTable[codon] || 'Unknown';
+                const aminoAcidElement = document.createElement('div');
+                aminoAcidElement.classList.add('amino-acid');
+                aminoAcidElement.textContent = aminoAcid;
+                aminoAcidContainer.appendChild(aminoAcidElement);
+            }
+        }
+
+        // Function to generate complementary sequence
+        function complementSequence(sequence) {
+            const complement = {
+                'A': 'T', 'T': 'A', 'C': 'G', 'G': 'C'
+            };
+            return sequence.map(base => complement[base]);
+        }
+
+        // Initial display
+        displaySequences();
+
+        // Mutation functions (insert, delete, replace)
+        function insertBase() {
+            const base = prompt('Enter base to insert (A, T, C, G):');
+            if (['A', 'T', 'C', 'G'].includes(base)) {
+                const position = prompt('Enter position to insert (1 to ' + (dnaSequence1.length + 1) + '):');
+                if (position > 0 && position <= dnaSequence1.length + 1) {
+                    dnaSequence1.splice(position - 1, 0, base);
+                    dnaSequence2 = complementSequence(dnaSequence1); // Update complementary sequence
+                    displaySequences();
+                } else {
+                    alert('Invalid position!');
+                }
+            } else {
+                alert('Invalid base!');
+            }
+        }
+
+        function deleteBase() {
+            const position = prompt('Enter position to delete (1 to ' + dnaSequence1.length + '):');
+            if (position > 0 && position <= dnaSequence1.length) {
+                dnaSequence1.splice(position - 1, 1);
+                dnaSequence2 = complementSequence(dnaSequence1); // Update complementary sequence
+                displaySequences();
+            } else {
+                alert('Invalid position!');
+            }
+        }
+
+        function replaceBase() {
+            const position = prompt('Enter position to replace (1 to ' + dnaSequence1.length + '):');
+            if (position > 0 && position <= dnaSequence1.length) {
+                const newBase = prompt('Enter new base (A, T, C, G):');
+                if (['A', 'T', 'C', 'G'].includes(newBase)) {
+                    dnaSequence1[position - 1] = newBase;
+                    dnaSequence2 = complementSequence(dnaSequence1); // Update complementary sequence
+                    displaySequences();
+                } else {
+                    alert('Invalid base!');
+                }
+            } else {
+                alert('Invalid position!');
+            }
+        }
+    </script>
+</body>
+</html>
