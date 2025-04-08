@@ -162,24 +162,24 @@
 
     <script>
         // Initialize with a default DNA sequence (can be changed by user input)
-        let dnaSequence1 = ['G', 'G', 'T', 'G', 'G', 'C', 'G', 'A', 'G', 'G', 'A', 'A', 'G', 'T', 'G', 'A', 'C', 'G', 'T', 'G', 'G', 'T'];
+        let dnaSequence1 = ['G', 'G', 'T', 'G', 'G', 'C', 'G', 'A', 'G', 'G', 'A', 'A', 'G', 'T', 'G', 'A', 'C', 'G', 'T', 'G', 'G', 'T', 'A'];
         let dnaSequence2 = complementSequence(dnaSequence1); // Automatically generate complementary sequence
 
         // Codon to Amino Acid mapping
         const codonTable = {
-            'UUU': 'Phenylalanine', 'UUC': 'Phenylalanine', 'UUA': 'Leucine', 'UUG': 'Leucine',
-            'CUU': 'Leucine', 'CUC': 'Leucine', 'CUA': 'Leucine', 'CUG': 'Leucine',
-            'AUU': 'Isoleucine', 'AUC': 'Isoleucine', 'AUA': 'Isoleucine', 'AUG': 'Methionine [Start]',
-            'GUU': 'Valine', 'GUC': 'Valine', 'GUA': 'Valine', 'GUG': 'Valine',
-            'UCU': 'Serine', 'UCC': 'Serine', 'UCA': 'Serine', 'UCG': 'Serine',
-            'CCU': 'Proline', 'CCC': 'Proline', 'CCA': 'Proline', 'CCG': 'Proline',
-            'ACU': 'Threonine', 'ACC': 'Threonine', 'ACA': 'Threonine', 'ACG': 'Threonine',
-            'GCU': 'Alanine', 'GCC': 'Alanine', 'GCA': 'Alanine', 'GCG': 'Alanine',
-            'UAU': 'Tyrosine', 'UAC': 'Tyrosine', 'UAA': 'Stop', 'UAG': 'Stop',
-            'CAU': 'Histidine', 'CAC': 'Histidine', 'CAA': 'Glutamine', 'CAG': 'Glutamine',
-            'AAU': 'Asparagine', 'AAC': 'Asparagine', 'AAA': 'Lysine', 'AAG': 'Lysine',
-            'GAU': 'Aspartic acid', 'GAC': 'Aspartic acid', 'GAA': 'Glutamic acid', 'GAG': 'Glutamic acid',
-            'GGU': 'Glycine', 'GGC': 'Glycine', 'GGA': 'Glycine', 'GGG': 'Glycine', 'AGC': 'Serine', 'AGU': 'Serine', 'UGG': 'Tryptophan'
+            'UUU': '苯丙氨酸', 'UUC': '苯丙氨酸', 'UUA': '亮氨酸', 'UUG': '亮氨酸',
+            'CUU': '亮氨酸', 'CUC': '亮氨酸', 'CUA': '亮氨酸', 'CUG': '亮氨酸',
+            'AUU': '异亮氨酸', 'AUC': '异亮氨酸', 'AUA': '异亮氨酸', 'AUG': '甲硫氨酸',
+            'GUU': '缬氨酸', 'GUC': '缬氨酸', 'GUA': '缬氨酸', 'GUG': '缬氨酸',
+            'UCU': '丝氨酸', 'UCC': '丝氨酸', 'UCA': '丝氨酸', 'UCG': '丝氨酸',
+            'CCU': '脯氨酸', 'CCC': '脯氨酸', 'CCA': '脯氨酸', 'CCG': '脯氨酸',
+            'ACU': '苏氨酸', 'ACC': '苏氨酸', 'ACA': '苏氨酸', 'ACG': '苏氨酸',
+            'GCU': '丙氨酸', 'GCC': '丙氨酸', 'GCA': '丙氨酸', 'GCG': '丙氨酸',
+            'UAU': '酪氨酸', 'UAC': '酪氨酸', 'UAA': '终止', 'UAG': '终止',
+            'CAU': '组氨酸', 'CAC': '组氨酸', 'CAA': '谷氨酰胺', 'CAG': '谷氨酰胺',
+            'AAU': '天冬酰胺', 'AAC': '天冬酰胺', 'AAA': '赖氨酸', 'AAG': '赖氨酸',
+            'GAU': '天冬氨酸', 'GAC': '天冬氨酸', 'GAA': '谷氨酸', 'GAG': '谷氨酸',
+            'GGU': '甘氨酸', 'GGC': '甘氨酸', 'GGA': '甘氨酸', 'GGG': '甘氨酸', 'AGC': '丝氨酸', 'AGU': '丝氨酸', 'UGG': '色氨酸', 'AGA': '精氨酸', 'AGG': '精氨酸', 'CGA': '精氨酸', 'CGU': '精氨酸', 'CGC': '精氨酸', 'CGG': '精氨酸', 'UGA': '终止', 'UGC': '半胱氨酸', 'UGU': '半胱氨酸'
         };
 
         // Function to set DNA sequence from user input
