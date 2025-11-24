@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>细胞呼吸原理 - 智能反馈版</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4338ca;
+            --success: #10b981;
+            --danger: #ef4444;
+            --bg: #f1f5f9;
+            --glass-border: #475569;
+            --tube-color: rgba(255, 255, 255, 0.8);
+            --tube-border: #94a3b8;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 20px;
+            padding-bottom: 220px; /* 底部空间 */
+            color: #333;
+            overscroll-behavior: none;
+        }
+
+        .container { max-width: 1000px; margin: 0 auto; }
+
+        header { text-align: center; margin-bottom: 25px; }
+        h1 { font-size: 1.6rem; color: #1e293b; margin: 5px 0; font-weight: 800; }
+        .intro { font-size: 0.95rem; color: #64748b; background: #e0e7ff; padding: 12px 20px; border-radius: 10px; display: inline-block;}
+
+        /* 实验台布局 */
+        .lab-bench {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 25px;
+        }
+        @media (min-width: 768px) { .lab-bench { grid-template-columns: 1fr 1fr; } }
+
+        .experiment-card {
+            background: #fff;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+            border: 1px solid #fff;
+        }
+
+        .card-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #f1f5f9;
+        }
+        .card-title { font-weight: 800; font-size: 1.2rem; color: #334155; }
+        .status-badge { font-size: 0.85rem; padding: 4px 12px; border-radius: 20px; background: #f1f5f9; color: #64748b; font-weight: 600;}
+
+        /* 装置区域 */
+        .setup-area {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 0; 
+            height: 190px;
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 10px 20px;
+            position: relative;
+            border: 2px solid #e2e8f0;
+            overflow: hidden;
+        }
+
+        /* 气泵图标 */
+        .air-pump {
+            position: absolute;
+            top: 40px;
+            left: 10px;
+            background: #e2e8f0;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            color: #475569;
+            font-weight: bold;
+            border: 2px solid #cbd5e1;
+            z-index: 5;
+        }
+        .air-pump::after {
+            content: ''; position: absolute; right: -10px; top: 50%;
+            margin-top: -3px; width: 10px; height: 6px; background: #94a3b8;
+        }
+
+        /* 插槽 */
+        .slot {
+            width: 110px;
+            height: 160px;
+            border: 2px dashed #cbd5e1;
+            border-right: none;
+            position: relative;
+            transition: all 0.2s;
+            background: rgba(255,255,255,0.4);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            z-index: 10;
+        }
+        .slot:last-child { border-right: 2px dashed #cbd5e1; border-top-right-radius: 12px; border-bottom-right-radius: 12px; }
+        .slot:first-of-type { border-top-left-radius: 12px; border-bottom-left-radius: 12px; }
+
+        .slot.drag-over {
+            background: #e0e7ff;
+            border-color: var(--primary);
+            border-style: solid;
+            border-width: 2px;
+            z-index: 20;
+            box-shadow: inset 0 0 15px rgba(99, 102, 241, 0.2);
+        }
+
+        .slot-label {
+            position: absolute; top: 8px; width: 100%; text-align: center;
+            font-size: 0.75rem; color: #94a3b8; pointer-events: none; font-weight: 600;
+        }
+
+        .content-placeholder {
+            width: 100%; height: 100%;
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+            position: relative;
+        }
+
+        /* === 锥形瓶视觉 === */
+        .flask-wrapper {
+            width: 80px; height: 100px;
+            position: relative;
+            filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.1));
+            z-index: 10; margin-bottom: 5px;
+        }
+
+        .flask-body {
+            width: 100%; height: 100%;
+            background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.6) 100%);
+            clip-path: path('M 25 0 L 55 0 L 75 100 L 5 100 Z');
+            border: 1px solid rgba(255,255,255,0.8);
+            position: relative; overflow: hidden;
+        }
+        
+        .flask-rim {
+            position: absolute; top: 0; left: 25px; width: 30px; height: 4px;
+            background: rgba(255,255,255,0.8); border-bottom: 1px solid #cbd5e1; z-index: 15;
+        }
+
+        /* 液体 */
+        .liquid {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 55%; 
+            transition: background 0.5s, opacity 0.5s;
+        }
+        .liquid.naoh { background: #bfdbfe; }
+        .liquid.yeast { background: #fef08a; }
+        .liquid.lime { background: #f8fafc; opacity: 0.5; }
+        .liquid.lime.cloudy { background: #cbd5e1; opacity: 0.95; }
+
+        /* === 连通导管系统 === */
+        .tubes-system {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; opacity: 0; transition: opacity 0.5s; z-index: 5;
+        }
+        .tubes-system.visible { opacity: 1; }
+
+        .stopper {
+            position: absolute; top: -5px; left: 28px; width: 24px; height: 12px;
+            background: #475569; border-radius: 2px; z-index: 12;
+            box-shadow: 0 2px 2px rgba(0,0,0,0.2);
+        }
+
+        .glass-tube {
+            position: absolute; background: var(--tube-color); border: 1px solid var(--tube-border); z-index: 11;
+        }
+        .tube-vertical-in { top: -15px; left: 33px; width: 5px; height: 105px; border-bottom: none; border-top: none; }
+        .tube-vertical-out { top: -15px; left: 43px; width: 5px; height: 45px; border-bottom: none; border-top: none; }
+        .tube-arm-left { top: -15px; height: 5px; background: var(--tube-color); border-top: 1px solid var(--tube-border); border-bottom: 1px solid var(--tube-border); z-index: 11; }
+        .tube-connect-pump { left: -50px; width: 88px; }
+        .tube-connect-prev { left: -65px; width: 103px; }
+
+        /* 气泡 */
+        @keyframes bubble-rise {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-40px); opacity: 0; }
+        }
+        .bubble {
+            position: absolute; bottom: 15px; left: 34px; width: 6px; height: 6px;
+            background: rgba(255,255,255,0.9); border-radius: 50%; border: 1px solid #94a3b8;
+            animation: bubble-rise 1.5s infinite; display: none;
+        }
+        .tubes-system.visible .bubble { display: block; }
+
+        /* 瓶底文字 */
+        .flask-label {
+            font-size: 0.8rem; font-weight: 700; color: #1e293b;
+            margin-top: 8px; text-align: center; white-space: nowrap; text-shadow: none;
+        }
+
+        /* === 底部物品栏 === */
+        .inventory {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background: rgba(255,255,255,0.95); backdrop-filter: blur(10px);
+            padding: 20px; box-shadow: 0 -10px 30px rgba(0,0,0,0.08); z-index: 100;
+            border-top-left-radius: 25px; border-top-right-radius: 25px;
+            border-top: 1px solid rgba(255,255,255,0.5);
+        }
+        .inv-title { text-align: center; color: #64748b; font-size: 0.9rem; margin-bottom: 15px; font-weight: 700; letter-spacing: 1px;}
+        
+        .draggable-container { display: flex; justify-content: center; gap: 25px; flex-wrap: wrap; }
+
+        .draggable-item {
+            width: 100px; height: 110px; background: #fff; border: 1px solid #e2e8f0;
+            border-radius: 16px; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; cursor: grab;
+            user-select: none; touch-action: none; position: relative;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02); transition: transform 0.1s;
+        }
+        .draggable-item:active { cursor: grabbing; transform: scale(0.95); border-color: var(--primary); }
+
+        .icon-flask {
+            width: 40px; height: 55px; background: linear-gradient(135deg, #fff 0%, #f1f5f9 100%);
+            clip-path: path('M 12 0 L 28 0 L 40 55 L 0 55 Z');
+            border: 1px solid #cbd5e1; position: relative; margin-bottom: 8px;
+        }
+        .icon-liquid { position: absolute; bottom: 0; width: 100%; height: 55%; }
+        .icon-text { font-size: 0.8rem; color: #334155; font-weight: bold; text-align: center;}
+
+        .drag-mirror {
+            position: fixed; pointer-events: none; z-index: 9999; width: 100px; height: 110px;
+            background: rgba(255,255,255,0.95); border: 2px solid var(--primary);
+            border-radius: 16px; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; box-shadow: 0 15px 35px rgba(99, 102, 241, 0.3);
+            opacity: 0.95; transform: scale(1.1);
+        }
+
+        .btn { width: 100%; padding: 14px; border-radius: 12px; border: none; font-weight: 700; margin-top: 15px; font-size: 1rem; letter-spacing: 0.5px;}
+        .btn-check { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3); }
+        .btn-check:active { background: var(--primary-dark); transform: translateY(1px); }
+        .btn-reset { background: #fff; border: 1px solid #cbd5e1; color: #64748b; }
+        
+        .feedback { display: none; margin-top: 15px; padding: 15px; border-radius: 12px; font-size: 0.9rem; border-left: 5px solid transparent; line-height: 1.6;}
+        .feedback.error { background: #fef2f2; color: #991b1b; border-left-color: var(--danger); }
+        .feedback.success { background: #ecfdf5; color: #065f46; border-left-color: var(--success); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>探究酵母菌细胞呼吸的方式</h1>
+        <div class="intro">
+            请将底部的试剂瓶拖拽至上方装置中，完成<strong>有氧</strong>与<strong>无氧</strong>呼吸的对比实验。
+        </div>
+    </header>
+
+    <div class="lab-bench">
+        <div class="experiment-card" id="card-A">
+            <div class="card-header">
+                <div class="card-title">装置甲：有氧呼吸</div>
+                <div class="status-badge" id="status-A">待组装</div>
+            </div>
+            <div class="setup-area">
+                <div class="air-pump">气泵</div>
+                <div class="slot" data-setup="A" data-index="0">
+                    <div class="slot-label">1号</div>
+                    <div class="content-placeholder"></div>
+                </div>
+                <div class="slot" data-setup="A" data-index="1">
+                    <div class="slot-label">2号</div>
+                    <div class="content-placeholder"></div>
+                </div>
+                <div class="slot" data-setup="A" data-index="2">
+                    <div class="slot-label">3号</div>
+                    <div class="content-placeholder"></div>
+                </div>
+            </div>
+            <div class="feedback" id="feedback-A"></div>
+            <button class="btn btn-check" onclick="checkSetup('A')">启动实验</button>
+            <button class="btn btn-reset" onclick="resetSetup('A')">清空重置</button>
+        </div>
+
+        <div class="experiment-card" id="card-B">
+            <div class="card-header">
+                <div class="card-title">装置乙：无氧呼吸</div>
+                <div class="status-badge" id="status-B">待组装</div>
+            </div>
+            <div class="setup-area">
+                <div class="slot" data-setup="B" data-index="0">
+                    <div class="slot-label">1号</div>
+                    <div class="content-placeholder"></div>
+                </div>
+                <div class="slot" data-setup="B" data-index="1">
+                    <div class="slot-label">2号</div>
+                    <div class="content-placeholder"></div>
+                </div>
+            </div>
+            <div class="feedback" id="feedback-B"></div>
+            <button class="btn btn-check" onclick="checkSetup('B')">启动实验</button>
+            <button class="btn btn-reset" onclick="resetSetup('B')">清空重置</button>
+        </div>
+    </div>
+</div>
+
+<div class="inventory">
+    <div class="inv-title">实验药品库 (长按拖拽)</div>
+    <div class="draggable-container">
+        <div class="draggable-item" data-type="naoh">
+            <div class="icon-flask"><div class="icon-liquid" style="background:#bae6fd"></div></div>
+            <div class="icon-text">10% NaOH</div>
+        </div>
+        <div class="draggable-item" data-type="yeast">
+            <div class="icon-flask"><div class="icon-liquid" style="background:#fde047"></div></div>
+            <div class="icon-text">酵母菌液</div>
+        </div>
+        <div class="draggable-item" data-type="lime">
+            <div class="icon-flask"><div class="icon-liquid" style="background:#e2e8f0"></div></div>
+            <div class="icon-text">石灰水</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    /* ================= 状态管理 ================= */
+    const setups = {
+        A: [null, null, null],
+        B: [null, null]
+    };
+
+    const itemConfig = {
+        'naoh': { name: '10% NaOH', class: 'naoh' },
+        'yeast': { name: '酵母菌液', class: 'yeast' },
+        'lime': { name: '澄清石灰水', class: 'lime' }
+    };
+
+    /* ================= 拖拽逻辑 ================= */
+    let dragItem = null;
+    let dragMirror = null;
+    let currentDroppable = null;
+
+    const draggables = document.querySelectorAll('.draggable-item');
+
+    draggables.forEach(el => {
+        el.addEventListener('touchstart', handleDragStart, {passive: false});
+        el.addEventListener('mousedown', handleDragStart);
+    });
+
+    function handleDragStart(e) {
+        e.preventDefault(); 
+        const type = this.dataset.type;
+        const rect = this.getBoundingClientRect();
+        
+        dragMirror = this.cloneNode(true);
+        dragMirror.classList.add('drag-mirror');
+        dragMirror.style.width = (rect.width * 1.1) + 'px';
+        dragMirror.style.height = (rect.height * 1.1) + 'px';
+        document.body.appendChild(dragMirror);
+
+        dragItem = { type: type };
+        
+        moveMirror(e);
+
+        document.addEventListener('touchmove', handleDragMove, {passive: false});
+        document.addEventListener('touchend', handleDragEnd);
+        document.addEventListener('mousemove', handleDragMove);
+        document.addEventListener('mouseup', handleDragEnd);
+    }
+
+    function handleDragMove(e) {
+        if (!dragMirror) return;
+        e.preventDefault();
+        moveMirror(e);
+
+        dragMirror.style.display = 'none';
+        let clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        let clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        let elemBelow = document.elementFromPoint(clientX, clientY);
+        dragMirror.style.display = 'flex';
+
+        if (!elemBelow) return;
+
+        let slotBelow = elemBelow.closest('.slot');
+
+        if (currentDroppable !== slotBelow) {
+            if (currentDroppable) currentDroppable.classList.remove('drag-over');
+            currentDroppable = slotBelow;
+            if (currentDroppable) currentDroppable.classList.add('drag-over');
+        }
+    }
+
+    function handleDragEnd(e) {
+        document.removeEventListener('touchmove', handleDragMove);
+        document.removeEventListener('touchend', handleDragEnd);
+        document.removeEventListener('mousemove', handleDragMove);
+        document.removeEventListener('mouseup', handleDragEnd);
+
+        if (currentDroppable && dragItem) {
+            const setupId = currentDroppable.dataset.setup;
+            const index = parseInt(currentDroppable.dataset.index);
+            updateSlot(setupId, index, dragItem.type);
+            currentDroppable.classList.remove('drag-over');
+        }
+
+        if (dragMirror) {
+            dragMirror.remove();
+            dragMirror = null;
+        }
+        dragItem = null;
+        currentDroppable = null;
+    }
+
+    function moveMirror(e) {
+        let clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        let clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        dragMirror.style.left = (clientX - 50) + 'px'; 
+        dragMirror.style.top = (clientY - 55) + 'px';
+    }
+
+    /* ================= 渲染逻辑 ================= */
+    
+    function updateSlot(setupId, index, type) {
+        setups[setupId][index] = type;
+        renderFlask(setupId, index, type);
+        resetFeedback(setupId);
+    }
+
+    function renderFlask(setupId, index, type) {
+        const slot = document.querySelector(`.slot[data-setup="${setupId}"][data-index="${index}"]`);
+        const placeholder = slot.querySelector('.content-placeholder');
+        
+        if (!type) {
+            placeholder.innerHTML = '';
+            return;
+        }
+
+        const config = itemConfig[type];
+        
+        let tubeHtml = '<div class="glass-tube tube-vertical-in"></div>';
+        
+        if (setupId === 'A' && index === 0) {
+            tubeHtml += '<div class="glass-tube tube-arm-left tube-connect-pump"></div>';
+        } else if (index > 0) {
+            if (!(setupId === 'B' && index === 0)) {
+                tubeHtml += '<div class="glass-tube tube-arm-left tube-connect-prev"></div>';
+            }
+        }
+
+        tubeHtml += '<div class="glass-tube tube-vertical-out"></div>';
+        tubeHtml += '<div class="bubble"></div>';
+
+        placeholder.innerHTML = `
+            <div class="flask-wrapper">
+                <div class="flask-rim"></div>
+                <div class="tubes-system">
+                    <div class="stopper"></div>
+                    ${tubeHtml}
+                </div>
+                
+                <div class="flask-body">
+                    <div class="liquid ${config.class}"></div>
+                </div>
+            </div>
+            <div class="flask-label">${config.name}</div>
+        `;
+    }
+
+    function resetSetup(setupId) {
+        setups[setupId] = setups[setupId].map(() => null);
+        const slots = document.querySelectorAll(`.slot[data-setup="${setupId}"]`);
+        slots.forEach(slot => {
+            slot.querySelector('.content-placeholder').innerHTML = '';
+        });
+        resetFeedback(setupId);
+    }
+
+    function resetFeedback(setupId) {
+        const status = document.getElementById(`status-${setupId}`);
+        const feedback = document.getElementById(`feedback-${setupId}`);
+        const card = document.getElementById(`card-${setupId}`);
+        
+        status.innerText = "配置中...";
+        status.style.background = "#f3f4f6";
+        status.style.color = "#666";
+        feedback.style.display = 'none';
+        
+        card.querySelectorAll('.tubes-system').forEach(el => el.classList.remove('visible'));
+        card.querySelectorAll('.liquid.lime').forEach(el => el.classList.remove('cloudy'));
+    }
+
+    /* ================= 核心：详细验证逻辑 ================= */
+
+    function checkSetup(setupId) {
+        const current = setups[setupId];
+        const status = document.getElementById(`status-${setupId}`);
+        const feedback = document.getElementById(`feedback-${setupId}`);
+
+        // 基础检查：是否填满
+        if (current.includes(null)) {
+            showFeedback(feedback, "error", "⚠️ 装置未完成，请填满所有空位。");
+            return;
+        }
+
+        let isCorrect = false;
+        let msg = "";
+
+        if (setupId === 'A') {
+            // 甲装置 (有氧) 判断逻辑
+            if (current[0] === 'naoh' && current[1] === 'yeast' && current[2] === 'lime') {
+                isCorrect = true;
+                msg = "✅ <strong>实验成功！</strong><br>1. 10% NaOH 去除空气CO₂ (防干扰)<br>2. 酵母有氧呼吸产生大量CO₂<br>3. 石灰水变浑浊 (检测结果)";
+            } else {
+                // 错误分支 (按优先级排序)
+                
+                // 1. 根本性错误：没放酵母
+                if (!current.includes('yeast')) {
+                    msg = "❌ <strong>未进行细胞呼吸</strong>：装置中缺少酵母菌，无法进行实验。";
+                }
+                // 2. 1号瓶特殊错误
+                else if (current[0] === 'lime') {
+                    msg = "❌ <strong>错误</strong>：澄清的石灰水不能完全吸收空气中的 CO₂，无法排除干扰。";
+                }
+                else if (current[0] === 'yeast') {
+                    msg = "❌ <strong>错误</strong>：空气直接通入酵母菌液，需用 10% NaOH 去除空气中的 CO₂，排除干扰。";
+                }
+                // 3. 顺序颠倒错误 (NaOH在1号位，但后面顺序错了)
+                else if (current[0] === 'naoh' && current[1] === 'lime' && current[2] === 'yeast') {
+                    msg = "❌ <strong>错误</strong>：细胞呼吸产生的 CO₂ 无法进入澄清的石灰水中（气流方向错误）。";
+                }
+                // 4. 3号瓶检测错误
+                else if (current[2] === 'naoh') {
+                    msg = "❌ <strong>错误</strong>：NaOH 不能用于检测 CO₂，请使用澄清石灰水。";
+                }
+                // 5. 其他兜底错误
+                else {
+                    msg = "❌ <strong>连接错误</strong>：请回顾实验原理（除杂 -> 反应 -> 检测）。";
+                }
+            }
+        } else {
+            // 乙装置 (无氧) 判断逻辑
+            if (current[0] === 'yeast' && current[1] === 'lime') {
+                isCorrect = true;
+                msg = "✅ <strong>实验成功！</strong><br>1. 酵母菌封口静置 (消耗氧气)<br>2. 产生气体通入石灰水变浑浊<br>说明无氧呼吸也产生 CO₂。";
+            } else {
+                // 错误分支
+                
+                // 1. 根本性错误：没放酵母
+                if (!current.includes('yeast')) {
+                    msg = "❌ <strong>未进行细胞呼吸</strong>：装置中缺少酵母菌。";
+                }
+                // 2. 根本性错误：没放石灰水
+                else if (!current.includes('lime')) {
+                    msg = "❌ <strong>没有检测装置</strong>：缺少澄清石灰水，无法检测产物。";
+                }
+                // 3. 特定错误：2号瓶放了NaOH
+                else if (current[1] === 'naoh') {
+                    msg = "❌ <strong>错误</strong>：NaOH 不能用于检测 CO₂。";
+                }
+                // 4. 特定错误：1号瓶放了NaOH (不需要通气)
+                else if (current[0] === 'naoh') {
+                    msg = "❌ <strong>错误</strong>：无氧呼吸不需通气，故不需要 NaOH。";
+                }
+                // 5. 其他兜底
+                else {
+                    msg = "❌ <strong>连接错误</strong>：请检查无氧呼吸装置顺序。";
+                }
+            }
+        }
+
+        if (isCorrect) {
+            showFeedback(feedback, "success", msg);
+            status.innerText = "运行中";
+            status.style.background = "#10B981";
+            status.style.color = "white";
+            runAnimation(setupId);
+        } else {
+            showFeedback(feedback, "error", msg);
+            status.innerText = "连接错误";
+            status.style.background = "#EF4444";
+            status.style.color = "white";
+        }
+    }
+
+    function showFeedback(el, type, html) {
+        el.className = `feedback ${type}`;
+        el.innerHTML = html;
+        el.style.display = 'block';
+    }
+
+    function runAnimation(setupId) {
+        const card = document.getElementById(`card-${setupId}`);
+        const tubes = card.querySelectorAll('.tubes-system');
+        
+        tubes.forEach((t, i) => {
+            setTimeout(() => t.classList.add('visible'), i * 300);
+        });
+
+        setTimeout(() => {
+            const liquids = card.querySelectorAll('.liquid');
+            const lastLiquid = liquids[liquids.length - 1];
+            if (lastLiquid.classList.contains('lime')) {
+                lastLiquid.classList.add('cloudy');
+            }
+        }, 2000);
+    }
+</script>
+
+</body>
+</html>
