@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>细胞有氧呼吸过程探索</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: linear-gradient(135deg, #1a936f, #88d498);
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 900px;
+        }
+        
+        h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            max-width: 900px;
+            width: 100%;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        
+        .instructions {
+            background-color: #e8f5e9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #4caf50;
+        }
+        
+        .instructions h2 {
+            color: #2e7d32;
+            margin-bottom: 10px;
+        }
+        
+        .instructions ul {
+            padding-left: 20px;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+        }
+        
+        .reset-btn-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+        
+        .reset-btn {
+            padding: 8px 15px;
+            background-color: #ff9800;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .reset-btn:hover {
+            background-color: #f57c00;
+        }
+        
+        .cell-diagram-container {
+            position: relative;
+            height: 450px;
+            background-color: #f0f7f4;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 2px solid #c8e6c9;
+            overflow: hidden;
+        }
+        
+        .cell-membrane-outer {
+            position: absolute;
+            width: 90%;
+            height: 85%;
+            top: 7.5%;
+            left: 5%;
+            border: 3px solid black;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .cell-membrane-inner {
+            position: absolute;
+            width: 86%;
+            height: 81%;
+            top: 9.5%;
+            left: 7%;
+            border: 2px solid black;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .cytoplasm {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(232, 245, 233, 0.5);
+            border-radius: 8px;
+        }
+        
+        .mitochondria-container {
+            position: absolute;
+            width: 280px;
+            height: 180px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .mitochondria-outer {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 3px solid #8e24aa;
+            border-radius: 140px / 90px;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .mitochondria-inner {
+            position: absolute;
+            width: 70%;
+            height: 60%;
+            top: 20%;
+            left: 15%;
+            border: 3px solid #ff9800;
+            border-radius: 98px / 54px;
+            background-color: rgba(255, 152, 0, 0.1);
+        }
+        
+        .mitochondria-matrix {
+            position: absolute;
+            width: 50%;
+            height: 40%;
+            top: 30%;
+            left: 25%;
+            border-radius: 70px / 36px;
+            background-color: rgba(255, 152, 0, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        .labels-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+        
+        .draggable-item {
+            padding: 10px 20px;
+            background-color: #e3f2fd;
+            border-radius: 25px;
+            cursor: move;
+            user-select: none;
+            border: 2px solid #90caf9;
+            transition: all 0.2s;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .draggable-item:hover {
+            background-color: #bbdefb;
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        
+        .drop-zone {
+            position: absolute;
+            width: 130px;
+            height: 60px;
+            border: 2px dashed #9e9e9e;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(255, 255, 255, 0.7);
+            font-size: 12px;
+            text-align: center;
+            padding: 5px;
+            transition: all 0.3s;
+        }
+        
+        .drop-zone.highlight {
+            background-color: rgba(200, 230, 201, 0.8);
+            border-color: #4caf50;
+        }
+        
+        .cytoplasm-zone {
+            top: 55%;
+            left: 11%;
+        }
+        
+        .mitochondria-matrix-zone {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 140px;
+            height: 80px;
+        }
+        
+        .mitochondria-inner-zone {
+            top: 22%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 140px;
+            height: 60px;
+        }
+        
+        .mitochondria-outer-zone {
+            top: 70%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 140px;
+            height: 60px;
+        }
+        
+        .run-btn {
+            align-self: center;
+            padding: 12px 30px;
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 16px;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .run-btn:hover {
+            background-color: #388e3c;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0,0,0,0.15);
+        }
+        
+        .run-btn:active {
+            transform: translateY(0);
+        }
+        
+        .area-label {
+            position: absolute;
+            font-size: 14px;
+            font-weight: bold;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 5px 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        
+        .cell-membrane-label {
+            top: 5%;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #000;
+        }
+        
+        .cytoplasm-label {
+            top: 50%;
+            left: 10.5%;
+            color: #2e7d32;
+        }
+        
+        .matrix-label {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, 50%);
+            color: #555;
+        }
+        
+        .inner-label {
+            top: 35%;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #ff9800;
+        }
+        
+        .outer-label {
+            top: 65%;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #8e24aa;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        
+        .modal h2 {
+            color: #1a936f;
+            margin-bottom: 15px;
+        }
+        
+        .reaction-equation {
+            font-size: 18px;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .close-btn {
+            padding: 10px 20px;
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+        
+        .close-btn:hover {
+            background-color: #d32f2f;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>细胞有氧呼吸过程探索</h1>
+    </header>
+    
+    <div class="container">
+        <div class="instructions">
+            <h2>操作说明</h2>
+            <ul>
+                <li>将底部的物质标签拖拽到细胞结构中的正确位置</li>
+                <li>点击"运行反应"按钮查看反应结果</li>
+                <li>只有将正确的物质组合放置在正确的区域，才会发生相应的反应</li>
+                <li>点击"重置"按钮可以清除所有已放置的标签</li>
+            </ul>
+        </div>
+        
+        <div class="reset-btn-container">
+            <button class="reset-btn" id="resetBtn">重置所有标签</button>
+        </div>
+        
+        <div class="cell-diagram-container" id="cellDiagram">
+            <div class="cytoplasm"></div>
+            <div class="cell-membrane-outer"></div>
+            <div class="cell-membrane-inner"></div>
+            
+            <div class="mitochondria-container">
+                <div class="mitochondria-outer"></div>
+                <div class="mitochondria-inner"></div>
+                <div class="mitochondria-matrix">线粒体基质</div>
+            </div>
+            
+            <!-- 区域标签 -->
+            <div class="area-label cell-membrane-label">细胞膜</div>
+            <div class="area-label cytoplasm-label">细胞质基质</div>
+            <div class="area-label outer-label">线粒体外膜</div>
+            <div class="area-label inner-label">线粒体内膜</div>
+            
+            <!-- 放置区域 -->
+            <div class="drop-zone cytoplasm-zone" id="cytoplasmZone" data-zone="cytoplasm">细胞质基质</div>
+            <div class="drop-zone mitochondria-outer-zone" id="outerZone" data-zone="outer">线粒体外膜</div>
+            <div class="drop-zone mitochondria-matrix-zone" id="matrixZone" data-zone="matrix">线粒体基质</div>
+            <div class="drop-zone mitochondria-inner-zone" id="innerZone" data-zone="inner">线粒体内膜</div>
+        </div>
+        
+        <div class="labels-container" id="labelsContainer">
+            <div class="draggable-item" draggable="true" data-type="glucose">葡萄糖</div>
+            <div class="draggable-item" draggable="true" data-type="water">水</div>
+            <div class="draggable-item" draggable="true" data-type="oxygen">氧气</div>
+            <div class="draggable-item" draggable="true" data-type="pyruvate">丙酮酸</div>
+            <div class="draggable-item" draggable="true" data-type="hydrogen">还原氢[H]</div>
+        </div>
+        
+        <button class="run-btn" id="runBtn">运行反应</button>
+    </div>
+    
+    <!-- 结果弹窗 -->
+    <div class="modal" id="resultModal">
+        <div class="modal-content">
+            <h2 id="modalTitle">反应结果</h2>
+            <div class="reaction-equation" id="reactionEquation"></div>
+            <p id="modalMessage"></p>
+            <button class="close-btn" id="closeModal">关闭</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const draggableItems = document.querySelectorAll('.draggable-item');
+            const dropZones = document.querySelectorAll('.drop-zone');
+            const resetBtn = document.getElementById('resetBtn');
+            const runBtn = document.getElementById('runBtn');
+            const resultModal = document.getElementById('resultModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const reactionEquation = document.getElementById('reactionEquation');
+            const modalMessage = document.getElementById('modalMessage');
+            const closeModal = document.getElementById('closeModal');
+            
+            // 存储每个区域中的物质
+            const zoneContents = {
+                cytoplasm: [],
+                outer: [],
+                matrix: [],
+                inner: []
+            };
+            
+            let draggedItem = null;
+            
+            // 拖拽开始
+            draggableItems.forEach(item => {
+                item.addEventListener('dragstart', function(e) {
+                    draggedItem = this;
+                    setTimeout(() => {
+                        this.style.opacity = '0.4';
+                    }, 0);
+                });
+                
+                item.addEventListener('dragend', function() {
+                    this.style.opacity = '1';
+                    draggedItem = null;
+                    
+                    // 移除所有区域的高亮
+                    dropZones.forEach(zone => {
+                        zone.classList.remove('highlight');
+                    });
+                });
+            });
+            
+            // 拖拽经过
+            dropZones.forEach(zone => {
+                zone.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    this.classList.add('highlight');
+                });
+                
+                zone.addEventListener('dragleave', function() {
+                    this.classList.remove('highlight');
+                });
+                
+                zone.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    this.classList.remove('highlight');
+                    
+                    if (draggedItem) {
+                        const zoneId = this.getAttribute('data-zone');
+                        const itemType = draggedItem.getAttribute('data-type');
+                        
+                        // 检查该物质是否已存在于该区域
+                        if (!zoneContents[zoneId].includes(itemType)) {
+                            // 创建克隆元素
+                            const clone = draggedItem.cloneNode(true);
+                            clone.style.position = 'absolute';
+                            clone.style.left = (e.offsetX - clone.offsetWidth/2) + 'px';
+                            clone.style.top = (e.offsetY - clone.offsetHeight/2) + 'px';
+                            clone.style.opacity = '1';
+                            clone.style.cursor = 'default';
+                            clone.draggable = false;
+                            
+                            // 添加双击删除功能
+                            clone.addEventListener('dblclick', function() {
+                                const itemType = this.getAttribute('data-type');
+                                const zoneId = this.parentElement.getAttribute('data-zone');
+                                
+                                // 从存储中移除
+                                const index = zoneContents[zoneId].indexOf(itemType);
+                                if (index > -1) {
+                                    zoneContents[zoneId].splice(index, 1);
+                                }
+                                
+                                this.remove();
+                            });
+                            
+                            this.appendChild(clone);
+                            
+                            // 存储到对应的区域
+                            zoneContents[zoneId].push(itemType);
+                        }
+                    }
+                });
+            });
+            
+            // 重置按钮
+            resetBtn.addEventListener('click', function() {
+                dropZones.forEach(zone => {
+                    while (zone.firstChild) {
+                        if (!zone.firstChild.classList || 
+                            !zone.firstChild.classList.contains('drop-zone')) {
+                            zone.removeChild(zone.firstChild);
+                        }
+                    }
+                    
+                    // 清空存储
+                    const zoneId = zone.getAttribute('data-zone');
+                    zoneContents[zoneId] = [];
+                });
+            });
+            
+            // 运行按钮
+            runBtn.addEventListener('click', function() {
+                let reactionFound = false;
+                
+                // 检查细胞质基质中的反应（第一阶段）
+                if (zoneContents.cytoplasm.includes('glucose') && 
+                    !zoneContents.cytoplasm.includes('pyruvate') && 
+                    !zoneContents.cytoplasm.includes('hydrogen') && 
+                    !zoneContents.cytoplasm.includes('water') && 
+                    !zoneContents.cytoplasm.includes('oxygen')) {
+                    
+                    modalTitle.textContent = '有氧呼吸第一阶段';
+                    reactionEquation.textContent = '葡萄糖 → 2丙酮酸 + 4[H] + 能量(少量)';
+                    modalMessage.textContent = '反应发生在细胞质基质中，葡萄糖分解为丙酮酸，释放少量能量。';
+                    reactionFound = true;
+                }
+                // 检查线粒体基质中的反应（第二阶段）
+                else if (zoneContents.matrix.includes('pyruvate') && 
+                         zoneContents.matrix.includes('water') && 
+                         zoneContents.matrix.length === 2) {
+                    
+                    modalTitle.textContent = '有氧呼吸第二阶段';
+                    reactionEquation.textContent = '2丙酮酸 + 6H₂O → 6CO₂ + 20[H] + 能量(少量)';
+                    modalMessage.textContent = '反应发生在线粒体基质中，丙酮酸和水彻底分解为二氧化碳和还原氢，释放少量能量。';
+                    reactionFound = true;
+                }
+                // 检查线粒体内膜中的反应（第三阶段）
+                else if (zoneContents.inner.includes('hydrogen') && 
+                         zoneContents.inner.includes('oxygen') && 
+                         zoneContents.inner.length === 2) {
+                    
+                    modalTitle.textContent = '有氧呼吸第三阶段';
+                    reactionEquation.textContent = '24[H] + 6O₂ → 12H₂O + 能量(大量)';
+                    modalMessage.textContent = '反应发生在线粒体内膜上，还原氢和氧气结合生成水，释放大量能量。';
+                    reactionFound = true;
+                }
+                
+                // 如果没有找到正确反应
+                if (!reactionFound) {
+                    modalTitle.textContent = '未检测到反应';
+                    reactionEquation.textContent = '';
+                    modalMessage.textContent = '在当前放置条件下未检测到有氧呼吸反应。请确保将正确的物质放置在正确的区域。';
+                }
+                
+                // 显示结果弹窗
+                resultModal.style.display = 'flex';
+            });
+            
+            // 关闭弹窗
+            closeModal.addEventListener('click', function() {
+                resultModal.style.display = 'none';
+            });
+            
+            // 点击弹窗外部关闭
+            window.addEventListener('click', function(e) {
+                if (e.target === resultModal) {
+                    resultModal.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

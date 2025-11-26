@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>虚拟实验室——有氧呼吸第二阶段探究</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+        }
+        .experiment-area {
+            display: flex;
+            margin-bottom: 30px;
+        }
+        .materials {
+            width: 200px;
+            padding: 15px;
+            background-color: #e8f4f8;
+            border-radius: 8px;
+            margin-right: 20px;
+        }
+        .material {
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #3498db;
+            color: white;
+            border-radius: 5px;
+            cursor: move;
+            text-align: center;
+            user-select: none;
+        }
+        .test-tubes {
+            display: flex;
+            flex-grow: 1;
+            justify-content: space-around;
+        }
+        .tube-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .tube-label {
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .tube-label.tube1 {
+            color: #27ae60; /* 绿色 */
+        }
+        .tube-label.tube2 {
+            color: #e67e22; /* 橙色 */
+        }
+        .tube-label.tube3 {
+            color: #9b59b6; /* 紫色 */
+        }
+        .tube-label.tube4 {
+            color: #3498db; /* 蓝色 */
+        }
+        .tube-label.tube5 {
+            color: #e74c3c; /* 红色 */
+        }
+        .tube {
+            width: 80px;
+            height: 200px;
+            border: 2px solid #7f8c8d;
+            border-top: none;
+            border-radius: 0 0 40px 40px;
+            position: relative;
+            background-color: #ecf0f1;
+            overflow: hidden;
+        }
+        .liquid {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background-color: #3498db;
+            transition: height 0.5s;
+            border-radius: 0 0 38px 38px;
+        }
+        .tube-contents {
+            margin-top: 10px;
+            min-height: 60px;
+            width: 100%;
+            text-align: center;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 0 10px;
+        }
+        button:hover {
+            background-color: #27ae60;
+        }
+        button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .data-table th, .data-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        .data-table th {
+            background-color: #34495e;
+            color: white;
+        }
+        .data-table tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 20px 0;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            max-width: 500px;
+        }
+        .color-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            margin-right: 5px;
+        }
+        .table-controls {
+            text-align: center;
+            margin: 10px 0;
+        }
+        .tube-number-row {
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>虚拟实验室——有氧呼吸第二阶段探究</h1>
+        <p>请设计实验，探究有氧呼吸第二阶段的场所。将左侧的实验材料拖拽到试管中，然后点击"开始实验"。</p>
+        
+        <div class="experiment-area">
+            <div class="materials">
+                <div class="material" draggable="true" data-type="pyruvate" data-name="丙酮酸溶液">5mM/L丙酮酸溶液</div>
+                <div class="material" draggable="true" data-type="cytoplasm" data-name="细胞质匀浆提取液">细胞质匀浆提取液</div>
+                <div class="material" draggable="true" data-type="membrane" data-name="线粒体膜">线粒体膜</div>
+                <div class="material" draggable="true" data-type="matrix" data-name="线粒体基质">线粒体基质</div>
+                <div class="material" draggable="true" data-type="mitochondria" data-name="线粒体">线粒体</div>
+                <div class="material" draggable="true" data-type="water" data-name="水">水</div>
+            </div>
+            
+            <div class="test-tubes">
+                <div class="tube-container">
+                    <div class="tube-label tube1">试管1</div>
+                    <div class="tube" id="tube1">
+                        <div class="liquid" style="height: 0%;"></div>
+                    </div>
+                    <div class="tube-contents" id="contents1"></div>
+                </div>
+                <div class="tube-container">
+                    <div class="tube-label tube2">试管2</div>
+                    <div class="tube" id="tube2">
+                        <div class="liquid" style="height: 0%;"></div>
+                    </div>
+                    <div class="tube-contents" id="contents2"></div>
+                </div>
+                <div class="tube-container">
+                    <div class="tube-label tube3">试管3</div>
+                    <div class="tube" id="tube3">
+                        <div class="liquid" style="height: 0%;"></div>
+                    </div>
+                    <div class="tube-contents" id="contents3"></div>
+                </div>
+                <div class="tube-container">
+                    <div class="tube-label tube4">试管4</div>
+                    <div class="tube" id="tube4">
+                        <div class="liquid" style="height: 0%;"></div>
+                    </div>
+                    <div class="tube-contents" id="contents4"></div>
+                </div>
+                <div class="tube-container">
+                    <div class="tube-label tube5">试管5</div>
+                    <div class="tube" id="tube5">
+                        <div class="liquid" style="height: 0%;"></div>
+                    </div>
+                    <div class="tube-contents" id="contents5"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button id="resetBtn">重置实验</button>
+            <button id="startBtn">开始实验</button>
+        </div>
+        
+        <table class="data-table" id="dataTable">
+            <thead>
+                <tr>
+                    <th>时间(小时)</th>
+                    <th colspan="5">丙酮酸浓度(mM/L)</th>
+                </tr>
+                <tr class="tube-number-row">
+                    <th></th>
+                    <th>1号管</th>
+                    <th>2号管</th>
+                    <th>3号管</th>
+                    <th>4号管</th>
+                    <th>5号管</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <!-- 数据将通过JavaScript动态添加 -->
+            </tbody>
+        </table>
+        
+        <div class="table-controls">
+            <button id="plotBtn" disabled>绘制曲线</button>
+        </div>
+        
+        <div class="chart-container">
+            <canvas id="pyruvateChart"></canvas>
+        </div>
+    </div>
+    
+    <div class="modal" id="experimentModal">
+        <div class="modal-content">
+            <h2>实验进行中</h2>
+            <p>实验正在进行，请等待结果...</p>
+            <button id="closeModal">关闭</button>
+        </div>
+    </div>
+    
+    <div class="modal" id="errorModal">
+        <div class="modal-content">
+            <h2>实验无法进行</h2>
+            <p id="errorMessage">反应不能进行，请确保每个试管中都含有丙酮酸溶液和一种提取液（细胞质匀浆提取液、线粒体膜、线粒体基质、线粒体或水）。</p>
+            <button id="closeErrorModal">确定</button>
+        </div>
+    </div>
+
+    <script>
+        // 实验数据映射 - 根据试剂组合确定数据
+        const experimentDataMap = {
+            // 丙酮酸 + 细胞质匀浆提取液
+            'pyruvate+cytoplasm': [4.8, 4.7, 4.6, 4.4, 4.2, 4.3],
+            // 丙酮酸 + 线粒体膜
+            'pyruvate+membrane': [4.6, 4.7, 4.6, 4.4, 4.2, 4.3],
+            // 丙酮酸 + 线粒体基质
+            'pyruvate+matrix': [4.1, 3.2, 2.7, 2.0, 1.1, 0.4],
+            // 丙酮酸 + 线粒体
+            'pyruvate+mitochondria': [4.3, 2.4, 1.1, 0.5, 0.2, 0.2],
+            // 丙酮酸 + 水
+            'pyruvate+water': [4.6, 4.8, 4.7, 4.3, 4.2, 4.4]
+        };
+        
+        const timePoints = [0, 2, 4, 6, 8, 10];
+        
+        // 存储每个试管中的材料
+        const tubeContents = {
+            tube1: [],
+            tube2: [],
+            tube3: [],
+            tube4: [],
+            tube5: []
+        };
+        
+        // 当前液体高度
+        const liquidHeights = {
+            tube1: 0,
+            tube2: 0,
+            tube3: 0,
+            tube4: 0,
+            tube5: 0
+        };
+        
+        // 试管颜色映射
+        const tubeColors = {
+            tube1: 'rgb(39, 174, 96)',   // 绿色
+            tube2: 'rgb(230, 126, 34)',  // 橙色
+            tube3: 'rgb(155, 89, 182)',  // 紫色
+            tube4: 'rgb(52, 152, 219)',  // 蓝色
+            tube5: 'rgb(231, 76, 60)'    // 红色
+        };
+        
+        // 材料名称映射
+        const materialNameMap = {
+            pyruvate: '丙酮酸溶液',
+            cytoplasm: '细胞质匀浆提取液',
+            membrane: '线粒体膜',
+            matrix: '线粒体基质',
+            mitochondria: '线粒体',
+            water: '水'
+        };
+        
+        // 拖拽功能
+        document.querySelectorAll('.material').forEach(material => {
+            material.addEventListener('dragstart', e => {
+                e.dataTransfer.setData('text/plain', e.target.dataset.type);
+            });
+        });
+        
+        document.querySelectorAll('.tube').forEach(tube => {
+            tube.addEventListener('dragover', e => {
+                e.preventDefault();
+            });
+            
+            tube.addEventListener('drop', e => {
+                e.preventDefault();
+                const materialType = e.dataTransfer.getData('text/plain');
+                const tubeId = e.currentTarget.id;
+                
+                // 检查是否已添加该材料
+                if (!tubeContents[tubeId].includes(materialType)) {
+                    tubeContents[tubeId].push(materialType);
+                    updateTubeContents(tubeId);
+                    updateLiquidHeight(tubeId);
+                }
+            });
+        });
+        
+        // 更新试管内容显示
+        function updateTubeContents(tubeId) {
+            const contentsElement = document.getElementById(`contents${tubeId.slice(-1)}`);
+            const materialNames = tubeContents[tubeId].map(type => materialNameMap[type]);
+            contentsElement.textContent = materialNames.join(' + ');
+        }
+        
+        // 更新液体高度
+        function updateLiquidHeight(tubeId) {
+            const liquidElement = document.querySelector(`#${tubeId} .liquid`);
+            liquidHeights[tubeId] = Math.min(liquidHeights[tubeId] + 20, 80); // 最大高度80%
+            liquidElement.style.height = `${liquidHeights[tubeId]}%`;
+        }
+        
+        // 开始实验按钮
+        document.getElementById('startBtn').addEventListener('click', () => {
+            // 验证每个试管是否包含必要的材料
+            let isValid = true;
+            for (let i = 1; i <= 5; i++) {
+                const tubeId = `tube${i}`;
+                const contents = tubeContents[tubeId];
+                
+                // 检查是否包含丙酮酸和一种提取液
+                const hasPyruvate = contents.includes('pyruvate');
+                const hasExtract = contents.includes('cytoplasm') || 
+                                  contents.includes('membrane') || 
+                                  contents.includes('matrix') || 
+                                  contents.includes('mitochondria') || 
+                                  contents.includes('water');
+                
+                if (!hasPyruvate || !hasExtract) {
+                    isValid = false;
+                    break;
+                }
+            }
+            
+            if (!isValid) {
+                document.getElementById('errorModal').style.display = 'flex';
+                return;
+            }
+            
+            // 显示实验进行中模态框
+            document.getElementById('experimentModal').style.display = 'flex';
+            
+            // 模拟实验进行（延迟后显示结果）
+            setTimeout(() => {
+                document.getElementById('experimentModal').style.display = 'none';
+                displayExperimentResults();
+                document.getElementById('plotBtn').disabled = false;
+            }, 2000);
+        });
+        
+        // 重置实验按钮
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            // 重置试管内容
+            for (let i = 1; i <= 5; i++) {
+                const tubeId = `tube${i}`;
+                tubeContents[tubeId] = [];
+                updateTubeContents(tubeId);
+                
+                // 重置液体高度
+                const liquidElement = document.querySelector(`#${tubeId} .liquid`);
+                liquidHeights[tubeId] = 0;
+                liquidElement.style.height = '0%';
+            }
+            
+            // 清空表格
+            document.getElementById('tableBody').innerHTML = '';
+            
+            // 禁用绘图按钮
+            document.getElementById('plotBtn').disabled = true;
+            
+            // 重置图表
+            if (window.myChart) {
+                window.myChart.destroy();
+            }
+        });
+        
+        // 根据试管内容获取实验数据
+        function getTubeData(tubeId) {
+            const contents = tubeContents[tubeId];
+            
+            // 检查是否包含丙酮酸
+            if (!contents.includes('pyruvate')) {
+                return null;
+            }
+            
+            // 确定提取液类型
+            let extractType = '';
+            if (contents.includes('cytoplasm')) {
+                extractType = 'cytoplasm';
+            } else if (contents.includes('membrane')) {
+                extractType = 'membrane';
+            } else if (contents.includes('matrix')) {
+                extractType = 'matrix';
+            } else if (contents.includes('mitochondria')) {
+                extractType = 'mitochondria';
+            } else if (contents.includes('water')) {
+                extractType = 'water';
+            } else {
+                return null; // 没有提取液
+            }
+            
+            // 构建键值
+            const key = `pyruvate+${extractType}`;
+            
+            // 返回对应的实验数据
+            return experimentDataMap[key] || null;
+        }
+        
+        // 获取试管的描述文本
+        function getTubeDescription(tubeId) {
+            const contents = tubeContents[tubeId];
+            const materialNames = contents.map(type => materialNameMap[type]);
+            return materialNames.join('+');
+        }
+        
+        // 显示实验结果
+        function displayExperimentResults() {
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = '';
+            
+            for (let i = 0; i < timePoints.length; i++) {
+                const row = document.createElement('tr');
+                
+                // 时间列
+                const timeCell = document.createElement('td');
+                timeCell.textContent = timePoints[i];
+                row.appendChild(timeCell);
+                
+                // 各试管数据列
+                for (let j = 1; j <= 5; j++) {
+                    const tubeId = `tube${j}`;
+                    const dataCell = document.createElement('td');
+                    const tubeData = getTubeData(tubeId);
+                    
+                    if (tubeData && i < tubeData.length) {
+                        dataCell.textContent = tubeData[i];
+                    } else {
+                        dataCell.textContent = '-';
+                    }
+                    
+                    row.appendChild(dataCell);
+                }
+                
+                tableBody.appendChild(row);
+            }
+        }
+        
+        // 绘制曲线按钮
+        document.getElementById('plotBtn').addEventListener('click', () => {
+            drawChart();
+        });
+        
+        // 绘制图表
+        function drawChart() {
+            const ctx = document.getElementById('pyruvateChart').getContext('2d');
+            
+            // 如果已有图表，先销毁
+            if (window.myChart) {
+                window.myChart.destroy();
+            }
+            
+            // 准备数据集
+            const datasets = [];
+            
+            for (let i = 1; i <= 5; i++) {
+                const tubeId = `tube${i}`;
+                const tubeData = getTubeData(tubeId);
+                
+                if (tubeData) {
+                    datasets.push({
+                        label: getTubeDescription(tubeId),
+                        data: tubeData,
+                        borderColor: tubeColors[tubeId],
+                        backgroundColor: tubeColors[tubeId].replace('rgb', 'rgba').replace(')', ', 0.2)'),
+                        tension: 0.1,
+                        // 设置动画延迟，使曲线依次从左至右展开
+                        animation: {
+                            delay: (context) => {
+                                if (context.type === 'data' && context.mode === 'default') {
+                                    return context.dataIndex * 100 + context.datasetIndex * 200;
+                                }
+                                return 0;
+                            }
+                        }
+                    });
+                }
+            }
+            
+            window.myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: timePoints,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: '时间 (小时)',
+                                color: '#000000', // 黑色字体
+                                font: {
+                                    size: 14 // 放大字体
+                                }
+                            },
+                            ticks: {
+                                color: '#000000', // 黑色字体
+                                font: {
+                                    size: 12 // 放大字体
+                                }
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: '丙酮酸浓度 (mM/L)',
+                                color: '#000000', // 黑色字体
+                                font: {
+                                    size: 14 // 放大字体
+                                }
+                            },
+                            ticks: {
+                                color: '#000000', // 黑色字体
+                                font: {
+                                    size: 12 // 放大字体
+                                }
+                            },
+                            beginAtZero: true,
+                            max: 8 // 设置纵坐标最大值为8
+                        }
+                    },
+                    animation: {
+                        duration: 2000,
+                        easing: 'easeOutQuart'
+                    }
+                }
+            });
+        }
+        
+        // 关闭模态框
+        document.getElementById('closeModal').addEventListener('click', () => {
+            document.getElementById('experimentModal').style.display = 'none';
+        });
+        
+        document.getElementById('closeErrorModal').addEventListener('click', () => {
+            document.getElementById('errorModal').style.display = 'none';
+        });
+    </script>
+</body>
+</html>
