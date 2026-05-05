@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DNA复制过程掌握情况检测网页</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Microsoft YaHei", "PingFang SC", "SimSun", Arial, sans-serif;
+      background: linear-gradient(180deg, #eef4ff 0%, #f8fafc 100%);
+      color: #0f172a;
+    }
+    .page {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 24px 18px 42px;
+    }
+    .hero, .card, .result-card {
+      background: #ffffff;
+      border-radius: 24px;
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+    }
+    .hero {
+      padding: 26px;
+      margin-bottom: 18px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: #eef2ff;
+      color: #4338ca;
+      font-size: 14px;
+      font-weight: 800;
+    }
+    h1 {
+      margin: 14px 0 10px;
+      font-size: clamp(28px, 4vw, 42px);
+      line-height: 1.18;
+      letter-spacing: -0.03em;
+    }
+    .hero p, .muted {
+      margin: 0;
+      color: #475569;
+      line-height: 1.85;
+      font-size: 16px;
+    }
+    .targets {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 18px;
+    }
+    .target {
+      border: 1px solid #e2e8f0;
+      background: #f8fafc;
+      border-radius: 16px;
+      padding: 14px;
+      line-height: 1.65;
+      color: #475569;
+      font-size: 14px;
+    }
+    .target strong { color: #0f172a; }
+    .grid {
+      display: grid;
+      grid-template-columns: 0.72fr 0.28fr;
+      gap: 18px;
+      align-items: start;
+    }
+    .card, .result-card {
+      padding: 22px;
+      margin-bottom: 18px;
+    }
+    .section-title {
+      margin: 0 0 8px;
+      font-size: 23px;
+      font-weight: 900;
+    }
+    .source-text {
+      border: 1px solid #bfdbfe;
+      background: #eff6ff;
+      color: #1e3a8a;
+      border-radius: 18px;
+      padding: 16px;
+      line-height: 1.9;
+      margin-top: 14px;
+    }
+    .question {
+      border: 1px solid #e2e8f0;
+      background: #fbfdff;
+      border-radius: 18px;
+      padding: 16px;
+      margin-top: 14px;
+    }
+    .question-title {
+      font-weight: 900;
+      line-height: 1.7;
+      margin-bottom: 12px;
+    }
+    .options {
+      display: grid;
+      gap: 9px;
+    }
+    label.option {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      border: 1px solid #dbe3ee;
+      background: #ffffff;
+      border-radius: 14px;
+      padding: 11px 12px;
+      cursor: pointer;
+      line-height: 1.6;
+      transition: 0.18s ease;
+    }
+    label.option:hover { background: #f8fafc; }
+    label.option.correct {
+      border-color: #86efac;
+      background: #ecfdf5;
+    }
+    label.option.wrong {
+      border-color: #fda4af;
+      background: #fff1f2;
+    }
+    input[type="radio"], input[type="checkbox"] {
+      margin-top: 5px;
+      transform: scale(1.08);
+    }
+    .select-row {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      gap: 10px;
+      align-items: center;
+      margin-top: 10px;
+    }
+    .select-row span {
+      color: #475569;
+      line-height: 1.6;
+    }
+    select, input[type="text"] {
+      width: 100%;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 15px;
+      background: #ffffff;
+      color: #0f172a;
+      outline: none;
+    }
+    select:focus, input[type="text"]:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.16);
+    }
+    .blank-line {
+      display: grid;
+      grid-template-columns: 1fr 190px;
+      gap: 10px;
+      align-items: center;
+      margin-top: 10px;
+      line-height: 1.8;
+    }
+    .tf-grid {
+      display: grid;
+      gap: 12px;
+    }
+    .tf-row {
+      border: 1px solid #e2e8f0;
+      background: #ffffff;
+      border-radius: 14px;
+      padding: 12px;
+    }
+    .tf-row p {
+      margin: 0 0 10px;
+      line-height: 1.7;
+      color: #334155;
+    }
+    .tf-options {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .explain-box {
+      margin-top: 10px;
+      border-left: 4px solid #cbd5e1;
+      padding: 8px 10px;
+      color: #475569;
+      line-height: 1.7;
+      display: none;
+    }
+    .explain-box.show { display: block; }
+    .sticky {
+      position: sticky;
+      top: 16px;
+    }
+    .student-box {
+      display: grid;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .progress-shell {
+      height: 12px;
+      background: #e2e8f0;
+      border-radius: 999px;
+      overflow: hidden;
+      margin: 14px 0 6px;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      background: #4f46e5;
+      transition: width 0.35s ease;
+    }
+    .button-row {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    button {
+      border: 0;
+      border-radius: 16px;
+      padding: 13px 16px;
+      font-size: 16px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: 0.18s ease;
+    }
+    .primary-btn {
+      color: #ffffff;
+      background: #4f46e5;
+    }
+    .primary-btn:hover { background: #4338ca; }
+    .secondary-btn {
+      color: #334155;
+      background: #f1f5f9;
+      border: 1px solid #dbe3ee;
+    }
+    .secondary-btn:hover { background: #e2e8f0; }
+    .small-btn {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-size: 14px;
+    }
+    .score {
+      font-size: 44px;
+      font-weight: 1000;
+      letter-spacing: -0.05em;
+      margin: 10px 0 0;
+    }
+    .level {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 90px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: #eef2ff;
+      color: #4338ca;
+      font-weight: 900;
+      margin-top: 8px;
+    }
+    .result-card {
+      display: none;
+    }
+    .result-card.show { display: block; }
+    .dimension {
+      margin-top: 12px;
+      border-radius: 14px;
+      background: #f8fafc;
+      padding: 12px;
+    }
+    .dimension-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-weight: 900;
+      margin-bottom: 8px;
+    }
+    .dim-bar-shell {
+      height: 9px;
+      border-radius: 999px;
+      background: #e2e8f0;
+      overflow: hidden;
+    }
+    .dim-bar {
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      background: #22c55e;
+    }
+    .suggestions {
+      margin: 12px 0 0 20px;
+      padding: 0;
+      line-height: 1.85;
+      color: #334155;
+    }
+    .summary-list {
+      margin: 10px 0 0 20px;
+      padding: 0;
+      line-height: 1.85;
+      color: #334155;
+    }
+    .feedback-note {
+      margin-top: 12px;
+      border-radius: 14px;
+      padding: 12px;
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      color: #9a3412;
+      line-height: 1.75;
+    }
+    .tag {
+      display: inline-flex;
+      border-radius: 999px;
+      padding: 5px 10px;
+      background: #f1f5f9;
+      color: #475569;
+      font-size: 13px;
+      font-weight: 800;
+      margin: 4px 4px 0 0;
+    }
+    .print-only { display: none; }
+    @media print {
+      body { background: #fff; }
+      .button-row, .source-text, .no-print { display: none !important; }
+      .grid { display: block; }
+      .sticky { position: static; }
+      .card, .result-card, .hero, .summary { box-shadow: none; border: 1px solid #ddd; }
+      .print-only { display: block; }
+    }
+    @media (max-width: 980px) {
+      .grid, .targets { grid-template-columns: 1fr; }
+      .sticky { position: static; }
+      .blank-line, .select-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="badge">🧬 DNA复制过程掌握情况检测</div>
+      <h1>DNA复制过程学习检测网页</h1>
+      <p>本检测不使用动画，重点考查学生是否理解 DNA 复制的过程、条件、酶的作用、碱基互补配对原则以及半保留复制结果。提交后系统会自动评分，分析薄弱点，并给出后续学习建议。</p>
+      <div class="targets">
+        <div class="target"><strong>过程理解：</strong>解旋、合成子链、重新螺旋。</div>
+        <div class="target"><strong>条件识别：</strong>模板、原料、能量、酶。</div>
+        <div class="target"><strong>原则应用：</strong>碱基互补配对与 5′→3′ 延伸。</div>
+        <div class="target"><strong>结果判断：</strong>每个新 DNA 含一条母链和一条新链。</div>
+      </div>
+      <div class="source-text">
+        <strong>学习材料：</strong>复制开始时，在细胞提供的能量的驱动下，解旋酶将 DNA 双螺旋的两条链解开，这个过程叫作解旋。然后，DNA 聚合酶等以解开的每一条母链为模板，以细胞中游离的 4 种脱氧核苷酸为原料，按照碱基互补配对原则，各自合成与母链互补的一条子链。随着模板链解旋过程的进行，新合成的子链也在不断延伸。同时，每条新链与其对应的模板链盘绕成双螺旋结构。
+      </div>
+    </section>
+
+    <section class="grid">
+      <div>
+        <section class="card">
+          <h2 class="section-title">一、基础概念检测</h2>
+          <p class="muted">请选择最符合 DNA 复制过程的答案。</p>
+          <div id="singleChoiceBox"></div>
+        </section>
+
+        <section class="card">
+          <h2 class="section-title">二、过程顺序检测</h2>
+          <p class="muted">请给下列事件选择正确顺序。1 表示最先发生，5 表示最后发生。</p>
+          <div class="question" id="orderBox"></div>
+        </section>
+
+        <section class="card">
+          <h2 class="section-title">三、关键词填空检测</h2>
+          <p class="muted">请根据 DNA 复制过程，从下拉框中选择正确关键词。</p>
+          <div class="question" id="blankBox"></div>
+        </section>
+
+        <section class="card">
+          <h2 class="section-title">四、判断与辨析检测</h2>
+          <p class="muted">请选择“正确”或“错误”。提交后会显示解析。</p>
+          <div class="tf-grid" id="trueFalseBox"></div>
+        </section>
+      </div>
+
+      <aside class="sticky">
+        <section class="card">
+          <h2 class="section-title">提交检测</h2>
+          <p class="muted">可填写学生姓名，便于打印或记录。</p>
+          <div class="student-box">
+            <input type="text" id="studentName" placeholder="学生姓名（可选）" />
+            <div class="progress-shell"><div class="progress-bar" id="progressBar"></div></div>
+            <p class="muted" id="progressText">作答进度：0%</p>
+          </div>
+          <div class="button-row">
+            <button class="primary-btn" id="submitBtn">提交并生成评价</button>
+            <button class="secondary-btn" id="resetBtn">重置检测</button>
+            <button class="secondary-btn small-btn" id="printBtn">打印 / 保存为PDF</button>
+          </div>
+          <div class="feedback-note no-print">
+            提交后会标出正误，并根据知识维度生成后续学习建议。
+          </div>
+        </section>
+
+        <section class="result-card" id="resultCard">
+          <h2 class="section-title">学习成果评价</h2>
+          <p class="muted" id="nameLine"></p>
+          <div class="score" id="scoreText">0</div>
+          <div class="level" id="levelText">未评价</div>
+          <div id="dimensionBox"></div>
+          <h3 style="margin:18px 0 6px;">后续学习建议</h3>
+          <ul class="suggestions" id="suggestionList"></ul>
+        </section>
+      </aside>
+    </section>
+
+    <section class="summary">
+      <h2 class="section-title">教师参考：本检测覆盖的核心知识</h2>
+      <ul class="summary-list">
+        <li>DNA复制开始时需要细胞提供能量。</li>
+        <li>解旋酶将DNA双螺旋的两条链解开，这个过程叫作解旋。</li>
+        <li>DNA聚合酶等以每一条母链为模板，以游离的4种脱氧核苷酸为原料合成子链。</li>
+        <li>子链合成遵循碱基互补配对原则，且新合成子链会随着模板链解旋不断延伸。</li>
+        <li>每条新链与其对应模板链盘绕成双螺旋结构，体现半保留复制。</li>
+      </ul>
+    </section>
+  </main>
+
+  <script>
+    const singleQuestions = [
+      {
+        id: "q1",
+        dim: "条件识别",
+        stem: "DNA复制开始时，推动相关过程进行的能量主要来自哪里？",
+        options: ["光能直接驱动", "细胞提供的能量", "核糖核苷酸释放的能量", "不需要能量"],
+        answer: 1,
+        explain: "材料中明确指出：复制开始时，在细胞提供的能量的驱动下进行。"
+      },
+      {
+        id: "q2",
+        dim: "酶的作用",
+        stem: "将DNA双螺旋的两条链解开的酶是？",
+        options: ["DNA聚合酶", "RNA聚合酶", "解旋酶", "淀粉酶"],
+        answer: 2,
+        explain: "解旋酶的作用是将DNA双螺旋两条链解开，形成可作为模板的母链。"
+      },
+      {
+        id: "q3",
+        dim: "条件识别",
+        stem: "DNA复制时合成子链的模板是？",
+        options: ["mRNA", "任意一条蛋白质链", "解开的每一条母链", "新合成的两条子链"],
+        answer: 2,
+        explain: "DNA复制以解开的每一条母链为模板，各自合成互补子链。"
+      },
+      {
+        id: "q4",
+        dim: "条件识别",
+        stem: "DNA复制合成子链所需的原料是？",
+        options: ["4种游离的脱氧核苷酸", "4种核糖核苷酸", "20种氨基酸", "葡萄糖"],
+        answer: 0,
+        explain: "DNA的基本组成单位是脱氧核苷酸，因此DNA复制的原料是4种游离脱氧核苷酸。"
+      },
+      {
+        id: "q5",
+        dim: "原则应用",
+        stem: "新子链合成时遵循的原则是？",
+        options: ["随机配对原则", "碱基互补配对原则", "氨基酸互补原则", "能量守恒原则"],
+        answer: 1,
+        explain: "新链与母链之间按A与T、G与C互补配对。"
+      },
+      {
+        id: "q6",
+        dim: "结果判断",
+        stem: "每条新链形成后，会与哪一条链盘绕成双螺旋结构？",
+        options: ["另一条新链", "对应的模板链", "任意RNA链", "蛋白质链"],
+        answer: 1,
+        explain: "每条新链与其对应的模板链盘绕成双螺旋结构。"
+      }
+    ];
+
+    const orderItems = [
+      { id: "o1", text: "细胞提供能量，DNA复制开始", answer: 1, dim: "过程理解" },
+      { id: "o2", text: "解旋酶将DNA双螺旋的两条链解开", answer: 2, dim: "酶的作用" },
+      { id: "o3", text: "每一条母链作为模板", answer: 3, dim: "过程理解" },
+      { id: "o4", text: "游离的4种脱氧核苷酸按照碱基互补配对原则合成子链", answer: 4, dim: "原则应用" },
+      { id: "o5", text: "新链与对应模板链盘绕成双螺旋结构", answer: 5, dim: "结果判断" }
+    ];
+
+    const blanks = [
+      { id: "b1", text: "DNA复制开始时，在细胞提供的____驱动下进行。", answer: "能量", dim: "条件识别" },
+      { id: "b2", text: "____将DNA双螺旋的两条链解开。", answer: "解旋酶", dim: "酶的作用" },
+      { id: "b3", text: "DNA聚合酶等以解开的每一条____为模板。", answer: "母链", dim: "条件识别" },
+      { id: "b4", text: "合成子链的原料是细胞中游离的4种____。", answer: "脱氧核苷酸", dim: "条件识别" },
+      { id: "b5", text: "子链合成时遵循____原则。", answer: "碱基互补配对", dim: "原则应用" },
+      { id: "b6", text: "每条新链与其对应的模板链盘绕成____结构。", answer: "双螺旋", dim: "结果判断" }
+    ];
+
+    const blankOptions = ["请选择", "能量", "解旋酶", "母链", "脱氧核苷酸", "碱基互补配对", "双螺旋", "核糖核苷酸", "氨基酸", "RNA聚合酶"];
+
+    const trueFalse = [
+      { id: "t1", text: "DNA复制时，两条母链都可以作为模板。", answer: true, dim: "条件识别", explain: "正确。两条解开的母链各自作为模板，分别合成互补子链。" },
+      { id: "t2", text: "DNA聚合酶的主要作用是将DNA双螺旋两条链解开。", answer: false, dim: "酶的作用", explain: "错误。解开双链的是解旋酶；DNA聚合酶主要参与子链合成。" },
+      { id: "t3", text: "新合成的子链会随着模板链解旋过程的进行而不断延伸。", answer: true, dim: "过程理解", explain: "正确。材料中指出，随着模板链解旋过程进行，新合成的子链也在不断延伸。" },
+      { id: "t4", text: "DNA复制的原料是4种游离的核糖核苷酸。", answer: false, dim: "条件识别", explain: "错误。DNA复制的原料是4种游离的脱氧核苷酸。" },
+      { id: "t5", text: "每个复制形成的DNA分子都含有一条模板链和一条新链。", answer: true, dim: "结果判断", explain: "正确。这体现了DNA复制的半保留特点。" }
+    ];
+
+    const dimensions = ["过程理解", "条件识别", "酶的作用", "原则应用", "结果判断"];
+
+    const singleChoiceBox = document.getElementById("singleChoiceBox");
+    const orderBox = document.getElementById("orderBox");
+    const blankBox = document.getElementById("blankBox");
+    const trueFalseBox = document.getElementById("trueFalseBox");
+    const progressBar = document.getElementById("progressBar");
+    const progressText = document.getElementById("progressText");
+    const submitBtn = document.getElementById("submitBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const printBtn = document.getElementById("printBtn");
+    const resultCard = document.getElementById("resultCard");
+    const scoreText = document.getElementById("scoreText");
+    const levelText = document.getElementById("levelText");
+    const dimensionBox = document.getElementById("dimensionBox");
+    const suggestionList = document.getElementById("suggestionList");
+    const studentName = document.getElementById("studentName");
+    const nameLine = document.getElementById("nameLine");
+
+    function renderSingleQuestions() {
+      singleChoiceBox.innerHTML = singleQuestions.map((q, qIndex) => `
+        <div class="question" data-qid="${q.id}">
+          <div class="question-title">${qIndex + 1}. ${q.stem}</div>
+          <div class="options">
+            ${q.options.map((option, index) => `
+              <label class="option" data-for="${q.id}" data-index="${index}">
+                <input type="radio" name="${q.id}" value="${index}" />
+                <span>${option}</span>
+              </label>
+            `).join("")}
+          </div>
+          <div class="explain-box" id="explain-${q.id}">${q.explain}</div>
+        </div>
+      `).join("");
+    }
+
+    function renderOrderBox() {
+      orderBox.innerHTML = orderItems.map(item => `
+        <div class="select-row">
+          <select id="${item.id}">
+            <option value="">请选择顺序</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+          </select>
+          <span>${item.text}</span>
+        </div>
+      `).join("");
+    }
+
+    function renderBlankBox() {
+      blankBox.innerHTML = blanks.map((blank, index) => `
+        <div class="blank-line">
+          <span>${index + 1}. ${blank.text}</span>
+          <select id="${blank.id}">
+            ${blankOptions.map(option => `<option value="${option === "请选择" ? "" : option}">${option}</option>`).join("")}
+          </select>
+        </div>
+      `).join("");
+    }
+
+    function renderTrueFalseBox() {
+      trueFalseBox.innerHTML = trueFalse.map((item, index) => `
+        <div class="tf-row" data-tid="${item.id}">
+          <p>${index + 1}. ${item.text}</p>
+          <div class="tf-options">
+            <label><input type="radio" name="${item.id}" value="true" /> 正确</label>
+            <label><input type="radio" name="${item.id}" value="false" /> 错误</label>
+          </div>
+          <div class="explain-box" id="explain-${item.id}">${item.explain}</div>
+        </div>
+      `).join("");
+    }
+
+    function getSelectedRadio(name) {
+      const checked = document.querySelector(`input[name="${name}"]:checked`);
+      return checked ? checked.value : "";
+    }
+
+    function countAnswered() {
+      let answered = 0;
+      singleQuestions.forEach(q => { if (getSelectedRadio(q.id) !== "") answered++; });
+      orderItems.forEach(item => { if (document.getElementById(item.id).value !== "") answered++; });
+      blanks.forEach(blank => { if (document.getElementById(blank.id).value !== "") answered++; });
+      trueFalse.forEach(item => { if (getSelectedRadio(item.id) !== "") answered++; });
+      return answered;
+    }
+
+    function updateProgress() {
+      const total = singleQuestions.length + orderItems.length + blanks.length + trueFalse.length;
+      const answered = countAnswered();
+      const percent = Math.round(answered / total * 100);
+      progressBar.style.width = percent + "%";
+      progressText.textContent = `作答进度：${percent}%（${answered}/${total}）`;
+    }
+
+    function clearMarks() {
+      document.querySelectorAll("label.option").forEach(label => {
+        label.classList.remove("correct", "wrong");
+      });
+      document.querySelectorAll(".explain-box").forEach(box => box.classList.remove("show"));
+      document.querySelectorAll("select").forEach(select => {
+        select.style.borderColor = "#cbd5e1";
+        select.style.background = "#ffffff";
+      });
+      document.querySelectorAll(".tf-row").forEach(row => {
+        row.style.borderColor = "#e2e8f0";
+        row.style.background = "#ffffff";
+      });
+    }
+
+    function addDimScore(dimScores, dim, correct, total) {
+      dimScores[dim].correct += correct;
+      dimScores[dim].total += total;
+    }
+
+    function grade() {
+      clearMarks();
+      const dimScores = {};
+      dimensions.forEach(dim => dimScores[dim] = { correct: 0, total: 0 });
+
+      let correct = 0;
+      let total = 0;
+
+      singleQuestions.forEach(q => {
+        total += 1;
+        const selectedValue = getSelectedRadio(q.id);
+        const isCorrect = Number(selectedValue) === q.answer;
+        if (isCorrect) correct += 1;
+        addDimScore(dimScores, q.dim, isCorrect ? 1 : 0, 1);
+
+        document.querySelectorAll(`label[data-for="${q.id}"]`).forEach(label => {
+          const index = Number(label.dataset.index);
+          if (index === q.answer) label.classList.add("correct");
+          if (String(index) === selectedValue && index !== q.answer) label.classList.add("wrong");
+        });
+        document.getElementById(`explain-${q.id}`).classList.add("show");
+      });
+
+      orderItems.forEach(item => {
+        total += 1;
+        const select = document.getElementById(item.id);
+        const isCorrect = Number(select.value) === item.answer;
+        if (isCorrect) correct += 1;
+        addDimScore(dimScores, item.dim, isCorrect ? 1 : 0, 1);
+        select.style.borderColor = isCorrect ? "#86efac" : "#fda4af";
+        select.style.background = isCorrect ? "#ecfdf5" : "#fff1f2";
+      });
+
+      blanks.forEach(blank => {
+        total += 1;
+        const select = document.getElementById(blank.id);
+        const isCorrect = select.value === blank.answer;
+        if (isCorrect) correct += 1;
+        addDimScore(dimScores, blank.dim, isCorrect ? 1 : 0, 1);
+        select.style.borderColor = isCorrect ? "#86efac" : "#fda4af";
+        select.style.background = isCorrect ? "#ecfdf5" : "#fff1f2";
+      });
+
+      trueFalse.forEach(item => {
+        total += 1;
+        const selectedValue = getSelectedRadio(item.id);
+        const selectedBool = selectedValue === "true" ? true : selectedValue === "false" ? false : null;
+        const isCorrect = selectedBool === item.answer;
+        if (isCorrect) correct += 1;
+        addDimScore(dimScores, item.dim, isCorrect ? 1 : 0, 1);
+        const row = document.querySelector(`[data-tid="${item.id}"]`);
+        row.style.borderColor = isCorrect ? "#86efac" : "#fda4af";
+        row.style.background = isCorrect ? "#ecfdf5" : "#fff1f2";
+        document.getElementById(`explain-${item.id}`).classList.add("show");
+      });
+
+      const score = Math.round(correct / total * 100);
+      showResult(score, correct, total, dimScores);
+      resultCard.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function levelByScore(score) {
+      if (score >= 90) return { level: "优秀", text: "对DNA复制过程、条件和结果掌握扎实，能够准确区分相关酶、模板、原料和配对原则。" };
+      if (score >= 75) return { level: "良好", text: "已基本掌握DNA复制主干过程，但个别细节还需要巩固，例如酶的功能或复制结果。" };
+      if (score >= 60) return { level: "合格", text: "已经理解部分知识，但对过程顺序、条件对应和概念辨析还不够稳定。" };
+      return { level: "待加强", text: "需要重新梳理DNA复制全过程，建议先理解关键词，再进行练习检测。" };
+    }
+
+    function buildSuggestions(dimScores) {
+      const weak = dimensions.filter(dim => {
+        const item = dimScores[dim];
+        return item.total > 0 && item.correct / item.total < 0.75;
+      });
+
+      const suggestions = [];
+      if (weak.includes("过程理解")) suggestions.push("用流程图重新梳理：能量驱动 → 解旋 → 母链作模板 → 合成子链 → 新链延伸 → 重新螺旋。");
+      if (weak.includes("条件识别")) suggestions.push("重点记忆DNA复制的条件：模板是两条母链，原料是4种游离脱氧核苷酸，过程需要细胞提供能量。 ");
+      if (weak.includes("酶的作用")) suggestions.push("建立“酶—功能”对应表：解旋酶负责解开双链，DNA聚合酶等负责催化子链合成。 ");
+      if (weak.includes("原则应用")) suggestions.push("复习碱基互补配对原则：A与T配对，G与C配对，并尝试根据一条母链写出互补子链。 ");
+      if (weak.includes("结果判断")) suggestions.push("理解半保留复制：每个新形成的DNA分子都由一条母链和一条新合成子链组成。 ");
+      if (suggestions.length === 0) suggestions.push("继续提升：尝试解释DNA复制为什么能保证遗传信息稳定传递，并完成一道互补链书写题。 ");
+      suggestions.push("建议课后用一句话概括DNA复制：在能量驱动和酶作用下，以两条母链为模板，利用脱氧核苷酸按碱基互补配对原则合成新链。 ");
+      return { weak, suggestions };
+    }
+
+    function showResult(score, correct, total, dimScores) {
+      const level = levelByScore(score);
+      const { weak, suggestions } = buildSuggestions(dimScores);
+      const name = studentName.value.trim();
+
+      resultCard.classList.add("show");
+      nameLine.textContent = name ? `学生：${name}｜答对 ${correct}/${total} 题` : `答对 ${correct}/${total} 题`;
+      scoreText.textContent = score;
+      levelText.textContent = level.level;
+
+      dimensionBox.innerHTML = `
+        <div class="feedback-note">${level.text}</div>
+        <div style="margin-top:12px;">
+          ${weak.length ? weak.map(item => `<span class="tag">需加强：${item}</span>`).join("") : `<span class="tag">暂无明显薄弱点</span>`}
+        </div>
+        ${dimensions.map(dim => {
+          const item = dimScores[dim];
+          const percent = item.total ? Math.round(item.correct / item.total * 100) : 0;
+          return `
+            <div class="dimension">
+              <div class="dimension-head"><span>${dim}</span><span>${item.correct}/${item.total}</span></div>
+              <div class="dim-bar-shell"><div class="dim-bar" style="width:${percent}%; background:${percent >= 75 ? '#22c55e' : percent >= 50 ? '#f59e0b' : '#ef4444'}"></div></div>
+            </div>
+          `;
+        }).join("")}
+      `;
+
+      suggestionList.innerHTML = suggestions.map(item => `<li>${item}</li>`).join("");
+    }
+
+    function resetAll() {
+      document.querySelectorAll("input[type='radio']").forEach(input => input.checked = false);
+      document.querySelectorAll("select").forEach(select => select.value = "");
+      studentName.value = "";
+      clearMarks();
+      resultCard.classList.remove("show");
+      updateProgress();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function bindProgressEvents() {
+      document.addEventListener("change", updateProgress);
+    }
+
+    renderSingleQuestions();
+    renderOrderBox();
+    renderBlankBox();
+    renderTrueFalseBox();
+    bindProgressEvents();
+    updateProgress();
+
+    submitBtn.addEventListener("click", grade);
+    resetBtn.addEventListener("click", resetAll);
+    printBtn.addEventListener("click", () => window.print());
+  </script>
+</body>
+</html>

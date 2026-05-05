@@ -1,0 +1,1509 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DNA半保留复制探究实验 | 交互式课堂网页</title>
+<style>
+  :root{
+    --bg:#07101f;
+    --panel:#111b2d;
+    --panel2:#172339;
+    --line:#2d3a52;
+    --text:#eef5ff;
+    --muted:#9dadc6;
+    --blue:#2f80ff;
+    --blue2:#5aa0ff;
+    --yellow:#ff9b20;
+    --yellow2:#ffd06a;
+    --purple:#b45cff;
+    --green:#26c495;
+    --red:#ff5a68;
+    --shadow:0 18px 45px rgba(0,0,0,.35);
+    --radius:22px;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC",Arial,sans-serif;
+    color:var(--text);
+    background:
+      radial-gradient(circle at 20% -10%,rgba(47,128,255,.25),transparent 35%),
+      radial-gradient(circle at 85% 0%,rgba(255,155,32,.13),transparent 30%),
+      linear-gradient(180deg,#07101f,#0b1324 62%,#07101f);
+    min-height:100vh;
+  }
+  header{
+    padding:24px 30px 18px;
+    border-bottom:1px solid rgba(255,255,255,.08);
+    background:rgba(9,17,31,.75);
+    backdrop-filter:blur(12px);
+    position:sticky;
+    top:0;
+    z-index:10;
+  }
+  .header-row{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:20px;
+    max-width:1460px;
+    margin:0 auto;
+  }
+  h1{
+    margin:0;
+    font-size:clamp(24px,3vw,38px);
+    letter-spacing:.04em;
+  }
+  .subtitle{color:var(--muted);margin-top:6px;font-size:15px}
+  .legend{
+    display:flex;gap:14px;align-items:center;flex-wrap:wrap;
+    background:rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.08);
+    padding:11px 14px;border-radius:16px;
+    white-space:nowrap;
+  }
+  .legend span{display:flex;align-items:center;gap:7px;color:#dbe7ff;font-weight:700}
+  .swatch{width:18px;height:18px;border-radius:5px;display:inline-block}
+  .swatch.blue{background:var(--blue)}
+  .swatch.yellow{background:var(--yellow)}
+  .swatch.purple{background:var(--purple)}
+  main{
+    max-width:1460px;
+    margin:0 auto;
+    padding:20px 30px 36px;
+  }
+  .layout{
+    display:grid;
+    grid-template-columns:minmax(520px,1.08fr) minmax(470px,.92fr);
+    gap:20px;
+  }
+  @media(max-width:1080px){
+    .layout{grid-template-columns:1fr}
+    header{position:relative}
+  }
+  .panel{
+    background:linear-gradient(180deg,rgba(23,35,57,.96),rgba(17,27,45,.96));
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    overflow:hidden;
+  }
+  .panel-head{
+    padding:18px 22px;
+    border-bottom:1px solid rgba(255,255,255,.08);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+  }
+  .panel-head h2{font-size:22px;margin:0}
+  .panel-body{padding:20px 22px}
+  .status-pill{
+    display:inline-flex;align-items:center;gap:8px;
+    color:#ddf7ef;background:rgba(38,196,149,.12);
+    border:1px solid rgba(38,196,149,.35);
+    border-radius:999px;padding:7px 12px;font-weight:700;font-size:13px;
+  }
+  .culture-card{
+    border:1px solid rgba(255,255,255,.1);
+    background:
+      linear-gradient(135deg,rgba(47,128,255,.10),rgba(255,155,32,.05)),
+      rgba(7,16,31,.55);
+    border-radius:20px;
+    padding:18px;
+    min-height:210px;
+    position:relative;
+  }
+  .culture-title{
+    display:flex;align-items:center;justify-content:center;gap:10px;
+    font-size:22px;font-weight:900;text-align:center;
+    padding-bottom:12px;border-bottom:1px solid rgba(255,155,32,.45);
+    margin-bottom:18px;
+  }
+  .culture-title strong{color:var(--yellow2)}
+  .dna-display{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:30px;
+    flex-wrap:wrap;
+    min-height:96px;
+  }
+  .dna-molecule{
+    width:70px;height:118px;
+    position:relative;
+    display:flex;
+    justify-content:center;
+    gap:16px;
+    padding-top:3px;
+  }
+  .dna-molecule.small{width:44px;height:76px;gap:8px}
+  .dna-molecule.tiny{width:34px;height:58px;gap:6px}
+  .strand{
+    width:10px;height:100%;border-radius:999px;
+    border:1px solid rgba(255,255,255,.16);
+    box-shadow:0 0 12px rgba(255,255,255,.06);
+  }
+  .dna-molecule.small .strand{width:8px}
+  .dna-molecule.tiny .strand{width:6px}
+  .strand.blue{background:linear-gradient(180deg,var(--blue2),var(--blue))}
+  .strand.yellow{background:linear-gradient(180deg,var(--yellow2),var(--yellow))}
+  .strand.empty{
+    background:rgba(255,255,255,.05);
+    border:2px dashed rgba(255,255,255,.26);
+    cursor:pointer;
+  }
+  .strand.mixed{
+    background:repeating-linear-gradient(180deg,var(--blue) 0 10px,var(--yellow) 10px 20px);
+  }
+  .strand.mixed-light{
+    background:repeating-linear-gradient(180deg,var(--yellow) 0 16px,var(--blue) 16px 22px);
+  }
+  .rung{
+    position:absolute;
+    left:20px;right:20px;height:2px;
+    background:rgba(255,255,255,.24);
+    border-radius:999px;
+  }
+  .dna-molecule.small .rung{left:12px;right:12px}
+  .dna-molecule.tiny .rung{left:9px;right:9px}
+  .r1{top:18%}.r2{top:34%}.r3{top:50%}.r4{top:66%}.r5{top:82%}
+  .sample-card{
+    display:inline-flex;align-items:center;gap:14px;
+    background:rgba(255,255,255,.07);
+    border:1px solid rgba(255,255,255,.14);
+    border-radius:18px;
+    padding:12px 14px;
+    cursor:grab;
+    user-select:none;
+    transition:.18s ease;
+  }
+  .sample-card:hover{
+    transform:translateY(-2px);
+    border-color:rgba(47,128,255,.65);
+    box-shadow:0 10px 24px rgba(47,128,255,.15);
+  }
+  .sample-card:active{cursor:grabbing}
+  .sample-text strong{display:block;font-size:16px}
+  .sample-text span{display:block;color:var(--muted);font-size:13px;margin-top:2px}
+  .instruction{
+    margin-top:14px;
+    border-radius:16px;
+    padding:14px 16px;
+    background:rgba(38,196,149,.10);
+    border:1px solid rgba(38,196,149,.30);
+    color:#dffbf3;
+    font-weight:700;
+  }
+  .toolbar{
+    display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;align-items:center;
+  }
+  button{
+    font-family:inherit;
+    border:0;
+    border-radius:999px;
+    padding:10px 16px;
+    font-size:15px;
+    font-weight:800;
+    color:#ecf4ff;
+    background:rgba(255,255,255,.10);
+    border:1px solid rgba(255,255,255,.12);
+    cursor:pointer;
+    transition:.18s ease;
+  }
+  button:hover:not(:disabled){
+    transform:translateY(-1px);
+    box-shadow:0 10px 20px rgba(0,0,0,.22);
+  }
+  button:disabled{
+    opacity:.45;
+    cursor:not-allowed;
+  }
+  .primary{background:linear-gradient(135deg,var(--blue),#6b7cff);border-color:rgba(90,160,255,.7)}
+  .success{background:linear-gradient(135deg,#18a979,var(--green));border-color:rgba(38,196,149,.7)}
+  .warn{background:linear-gradient(135deg,#f0781e,var(--yellow));border-color:rgba(255,155,32,.7);color:#172033}
+  .danger{background:linear-gradient(135deg,#df3b55,var(--red));border-color:rgba(255,90,104,.7)}
+  .ghost{background:rgba(255,255,255,.07)}
+  .hidden{display:none!important}
+
+  .centrifuge-zone{
+    min-height:560px;
+  }
+  .drop-zone{
+    margin:18px 22px 0;
+    border:2px dashed rgba(90,160,255,.38);
+    border-radius:20px;
+    min-height:96px;
+    display:flex;align-items:center;justify-content:center;text-align:center;
+    color:#cbd8ef;
+    background:rgba(47,128,255,.07);
+    padding:14px;
+    transition:.2s ease;
+  }
+  .drop-zone.ready{
+    border-color:rgba(38,196,149,.7);
+    background:rgba(38,196,149,.10);
+  }
+  .centrifuge-body{
+    padding:20px 22px 22px;
+  }
+  .tube-area{
+    display:grid;
+    grid-template-columns:1fr 165px;
+    gap:18px;
+    align-items:center;
+  }
+  @media(max-width:600px){
+    .tube-area{grid-template-columns:1fr}
+  }
+  .tube-wrap{
+    min-height:355px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    position:relative;
+  }
+  .tube{
+    position:relative;
+    width:150px;height:320px;
+    border:5px solid #38506e;
+    border-top:0;
+    border-radius:0 0 74px 74px;
+    background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(65,97,110,.30) 35%,rgba(157,133,68,.25) 100%);
+    box-shadow:inset 0 0 24px rgba(255,255,255,.05),0 18px 30px rgba(0,0,0,.25);
+    overflow:hidden;
+  }
+  .tube:before{
+    content:"密度梯度";
+    position:absolute;
+    top:18px;left:50%;
+    transform:translateX(-50%);
+    color:rgba(255,255,255,.35);
+    font-weight:900;
+    letter-spacing:.15em;
+    font-size:13px;
+    white-space:nowrap;
+  }
+  .mouth{
+    position:absolute;
+    top:8px;width:172px;height:18px;
+    border:5px solid #38506e;
+    border-radius:50%;
+    background:#0f1a2b;
+    z-index:2;
+  }
+  .band{
+    position:absolute;
+    left:18px;right:18px;height:20px;border-radius:999px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:12px;font-weight:900;
+    color:#fff;
+    box-shadow:0 0 18px rgba(255,255,255,.18),0 4px 12px rgba(0,0,0,.32);
+    animation:bandIn .5s ease both;
+  }
+  .band.heavy{background:linear-gradient(90deg,#1264e8,var(--blue2));top:72%}
+  .band.middle{background:linear-gradient(90deg,#8d37ff,var(--purple));top:48%}
+  .band.middleLight{background:linear-gradient(90deg,#a856ff,#ff9b20);top:38%}
+  .band.light{background:linear-gradient(90deg,#f98c18,var(--yellow2));top:25%;color:#251807}
+  @keyframes bandIn{from{opacity:0;transform:scaleX(.55)}to{opacity:1;transform:scaleX(1)}}
+  .tube.spin{
+    animation:tubeSpin .12s linear infinite;
+  }
+  @keyframes tubeSpin{
+    0%{transform:translateX(0) rotate(.2deg)}
+    50%{transform:translateX(2px) rotate(-.2deg)}
+    100%{transform:translateX(-2px) rotate(.2deg)}
+  }
+  .rpm-box{
+    display:grid;gap:12px;
+  }
+  .rpm{
+    background:#070d18;
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:14px;
+    padding:14px;
+    font-size:28px;
+    font-family:Consolas,monospace;
+    color:#c8f7ff;
+    text-align:right;
+    box-shadow:inset 0 0 20px rgba(47,128,255,.08);
+  }
+  .result-note{
+    border-radius:16px;
+    padding:14px;
+    background:rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.09);
+    color:#dce7fa;
+    min-height:96px;
+  }
+  .history{
+    margin-top:18px;
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:12px;
+  }
+  @media(max-width:760px){.history{grid-template-columns:repeat(2,1fr)}}
+  .mini-tube-card{
+    background:rgba(255,255,255,.05);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:16px;
+    padding:10px;
+    text-align:center;
+  }
+  .mini-tube-card strong{font-size:13px;color:#cbd8ef}
+  .mini-tube{
+    width:56px;height:120px;margin:8px auto 0;
+    border:3px solid #354a68;border-top:0;border-radius:0 0 30px 30px;
+    position:relative;overflow:hidden;
+    background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(171,142,58,.16));
+  }
+  .mini-band{
+    position:absolute;left:8px;right:8px;height:8px;border-radius:999px;
+  }
+  .mini-band.heavy{background:var(--blue);top:72%}
+  .mini-band.middle{background:var(--purple);top:48%}
+  .mini-band.middleLight{background:linear-gradient(90deg,var(--purple),var(--yellow));top:38%}
+  .mini-band.light{background:var(--yellow);top:25%}
+
+  .workspace{
+    margin-top:16px;
+  }
+  .dialog{
+    background:rgba(7,16,31,.62);
+    border:1px solid rgba(255,255,255,.10);
+    border-radius:20px;
+    padding:18px;
+  }
+  .dialog h3{margin:0 0 10px;font-size:21px}
+  .dialog p{color:#d6e0f2;margin:8px 0}
+  .quiz-options{display:grid;gap:10px;margin-top:14px}
+  .quiz-options button{
+    border-radius:16px;text-align:left;
+    padding:13px 15px;background:rgba(255,255,255,.07);
+    color:#eaf2ff;font-weight:700;
+  }
+  .quiz-options button.correct{background:rgba(38,196,149,.18);border-color:rgba(38,196,149,.72)}
+  .quiz-options button.wrong{background:rgba(255,90,104,.17);border-color:rgba(255,90,104,.68)}
+  .feedback{
+    margin-top:12px;border-radius:14px;padding:12px 14px;
+    background:rgba(255,255,255,.06);
+    color:#dce7f8;border:1px solid rgba(255,255,255,.08);
+  }
+  .feedback.good{border-color:rgba(38,196,149,.55);color:#ccfff1}
+  .feedback.bad{border-color:rgba(255,90,104,.55);color:#ffd7dc}
+  .pen-row{
+    display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:14px 0;
+  }
+  .pen{
+    display:inline-flex;align-items:center;gap:8px;
+  }
+  .pen.active{
+    outline:3px solid rgba(255,255,255,.28);
+    transform:translateY(-1px);
+  }
+  .pen-blue{background:linear-gradient(135deg,#1264e8,var(--blue2))}
+  .pen-yellow{background:linear-gradient(135deg,#f0781e,var(--yellow2));color:#1f1606}
+  .draw-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(104px,1fr));
+    gap:12px;
+    max-height:380px;
+    overflow:auto;
+    padding:4px;
+  }
+  .draw-card{
+    background:rgba(255,255,255,.055);
+    border:1px solid rgba(255,255,255,.10);
+    border-radius:16px;
+    padding:12px 8px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:8px;
+  }
+  .draw-card label{color:var(--muted);font-size:13px}
+  .draw-card .strand.empty:hover{
+    border-color:#fff;
+    box-shadow:0 0 18px rgba(255,255,255,.15);
+  }
+  .prediction-grid{
+    display:grid;gap:12px;margin-top:14px;
+  }
+  .prediction-row{
+    display:grid;
+    grid-template-columns:135px 1fr;
+    gap:12px;
+    align-items:center;
+    background:rgba(255,255,255,.055);
+    border:1px solid rgba(255,255,255,.09);
+    border-radius:16px;
+    padding:12px;
+  }
+  @media(max-width:650px){.prediction-row{grid-template-columns:1fr}}
+  .choice-buttons{display:flex;gap:8px;flex-wrap:wrap}
+  .choice-buttons button{
+    font-size:13px;padding:8px 11px;border-radius:12px;
+  }
+  .choice-buttons button.selected{
+    background:rgba(47,128,255,.30);
+    border-color:rgba(90,160,255,.85);
+  }
+  .prediction-row.good{border-color:rgba(38,196,149,.70)}
+  .prediction-row.bad{border-color:rgba(255,90,104,.72)}
+  .ai-panel{
+    margin-top:20px;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+  }
+  @media(max-width:900px){.ai-panel{grid-template-columns:1fr}}
+  .ai-card{
+    background:linear-gradient(180deg,rgba(23,35,57,.96),rgba(13,22,37,.96));
+    border:1px solid rgba(180,92,255,.24);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:20px 22px;
+  }
+  .ai-card h2{margin:0 0 10px;font-size:22px}
+  .ai-output{
+    white-space:pre-wrap;
+    background:rgba(7,16,31,.70);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:16px;
+    padding:14px;
+    min-height:118px;
+    color:#eaf2ff;
+  }
+  .table{
+    width:100%;border-collapse:collapse;margin-top:12px;font-size:14px;
+    overflow:hidden;border-radius:14px;
+  }
+  .table th,.table td{
+    border-bottom:1px solid rgba(255,255,255,.09);
+    padding:10px;text-align:left;vertical-align:top;
+  }
+  .table th{background:rgba(255,255,255,.07)}
+  .table tr:last-child td{border-bottom:0}
+  .toast{
+    position:fixed;
+    left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);
+    background:rgba(7,16,31,.95);
+    border:1px solid rgba(255,255,255,.16);
+    color:#fff;border-radius:999px;
+    padding:12px 18px;
+    box-shadow:var(--shadow);
+    opacity:0;pointer-events:none;
+    transition:.25s ease;
+    z-index:50;
+    max-width:min(720px,92vw);
+    text-align:center;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  .evaluation-card{
+    margin-top:16px;
+    background:linear-gradient(180deg,rgba(38,196,149,.10),rgba(47,128,255,.08));
+    border:1px solid rgba(38,196,149,.30);
+    border-radius:20px;
+    padding:18px;
+  }
+  .evaluation-title{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-bottom:12px;
+  }
+  .evaluation-title h3{
+    margin:0;
+    font-size:22px;
+  }
+  .score-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:8px 13px;
+    border-radius:999px;
+    background:rgba(38,196,149,.16);
+    border:1px solid rgba(38,196,149,.45);
+    color:#d6fff3;
+    font-weight:900;
+  }
+  .score-bar{
+    height:12px;
+    border-radius:999px;
+    background:rgba(255,255,255,.10);
+    overflow:hidden;
+    margin:10px 0 16px;
+  }
+  .score-fill{
+    height:100%;
+    border-radius:999px;
+    background:linear-gradient(90deg,var(--green),var(--blue));
+  }
+  .eval-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+  }
+  @media(max-width:760px){.eval-grid{grid-template-columns:1fr}}
+  .eval-box{
+    background:rgba(7,16,31,.55);
+    border:1px solid rgba(255,255,255,.10);
+    border-radius:16px;
+    padding:14px;
+  }
+  .eval-box h4{
+    margin:0 0 8px;
+    font-size:17px;
+  }
+  .eval-box ul{
+    margin:8px 0 0;
+    padding-left:20px;
+  }
+  .eval-box li{
+    margin:6px 0;
+    color:#dbe7fa;
+  }
+  .eval-plan{
+    margin-top:14px;
+    background:rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.10);
+    border-radius:16px;
+    padding:14px;
+  }
+  .eval-plan h4{
+    margin:0 0 8px;
+    font-size:17px;
+  }
+  .eval-plan ol{
+    margin:8px 0 0;
+    padding-left:22px;
+  }
+  .eval-plan li{
+    margin:7px 0;
+    color:#dbe7fa;
+  }
+
+  .confetti{
+    position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:45;
+  }
+  .piece{
+    position:absolute;width:8px;height:14px;border-radius:2px;
+    animation:fall 1.6s linear forwards;
+  }
+  @keyframes fall{
+    to{transform:translateY(105vh) rotate(540deg);opacity:0}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="header-row">
+    <div>
+      <h1>DNA半保留复制探究实验</h1>
+      <div class="subtitle">面向公开课的高交互模拟器：拖拽取样、手动绘制、假说预测、离心验证、即时反馈</div>
+    </div>
+    <div class="legend" aria-label="颜色图例">
+      <span><i class="swatch blue"></i>15N链 / 重同位素</span>
+      <span><i class="swatch yellow"></i>14N链 / 轻同位素</span>
+      <span><i class="swatch purple"></i>15N-14N 中带</span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="layout">
+    <section class="panel">
+      <div class="panel-head">
+        <h2>① 探究实验操作台</h2>
+        <span class="status-pill" id="stagePill">第0代：15N培养</span>
+      </div>
+      <div class="panel-body">
+        <div class="culture-card" id="cultureCard">
+          <div class="culture-title" id="cultureTitle">大肠杆菌培养环境：<strong>15N（重同位素）</strong></div>
+          <div class="dna-display" id="cultureDisplay"></div>
+          <div class="instruction" id="instruction">请将“第0代DNA样品”拖入右侧密度梯度离心结果验证区。</div>
+        </div>
+
+        <div class="workspace" id="workspace"></div>
+      </div>
+    </section>
+
+    <section class="panel centrifuge-zone">
+      <div class="panel-head">
+        <h2>② 密度梯度离心结果验证区</h2>
+        <span class="status-pill" id="verifyPill">等待取样</span>
+      </div>
+      <div class="drop-zone" id="dropZone">
+        将左侧DNA样品拖到这里，或点击样品卡片快速装入试管。
+      </div>
+      <div class="centrifuge-body">
+        <div class="tube-area">
+          <div class="tube-wrap">
+            <div class="mouth"></div>
+            <div class="tube" id="tube"></div>
+          </div>
+          <div class="rpm-box">
+            <div class="rpm"><span id="rpmValue">0</span> RPM</div>
+            <button class="primary" id="centrifugeBtn" disabled>启动离心机</button>
+            <div class="result-note" id="resultNote">提示：15N 标记的 DNA 密度较大，离心后条带更靠下；14N 标记的 DNA 密度较小，条带更靠上。</div>
+          </div>
+        </div>
+        <div class="history" id="history"></div>
+      </div>
+    </section>
+  </section>
+
+  <section class="ai-panel">
+    <article class="ai-card">
+      <h2>🤖 AI助教：探究提示</h2>
+      <p class="subtitle">课堂使用时，可把它作为“AI不直接给答案，只给思维支架”的展示点。</p>
+      <div class="toolbar">
+        <button class="ghost" id="hintBtn">给学生一个提示</button>
+        <button class="ghost" id="questionBtn">生成追问</button>
+        <button class="ghost" id="recordBtn">生成实验记录</button>
+      </div>
+      <div class="ai-output" id="aiOutput">点击上方按钮，获得当前阶段的AI助教提示。</div>
+    </article>
+    <article class="ai-card">
+      <h2>📌 板书与结论区</h2>
+      <table class="table">
+        <tr><th>探究链</th><th>课堂表达</th></tr>
+        <tr><td>提出问题</td><td>DNA复制时，亲代两条链怎样分配给子代DNA？</td></tr>
+        <tr><td>建立假说</td><td>全保留复制、半保留复制、分散复制。</td></tr>
+        <tr><td>预测结果</td><td>用 15N / 14N 密度差推测离心条带。</td></tr>
+        <tr><td>实验证据</td><td>第1代一条中带；第2代一条中带和一条轻带。</td></tr>
+        <tr><td>结论</td><td>DNA复制方式是半保留复制。</td></tr>
+      </table>
+    </article>
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+<div class="confetti" id="confetti"></div>
+
+<script>
+const app = {
+  phase:"g0Drag",
+  loadedSample:null,
+  currentPen:"blue",
+  drawGen:0,
+  drawn:[],
+  predictionSelections:{},
+  history:{},
+  lastQuestionAnswered:false,
+  quizStats:{
+    transfer:{attempts:0, correct:false, firstTry:false},
+    g1:{attempts:0, correct:false, firstTry:false},
+    g2:{attempts:0, correct:false, firstTry:false},
+    final:{attempts:0, correct:false, firstTry:false}
+  },
+  predictionStats:{
+    1:{checks:0, correct:false},
+    2:{checks:0, correct:false}
+  },
+  drawStats:{
+    1:{completed:false, usedHint:false},
+    2:{completed:false, usedHint:false},
+    3:{completed:false, usedHint:false}
+  }
+};
+
+const phaseLabels = {
+  g0Drag:"第0代：15N培养",
+  g0Done:"第0代：离心验证完成",
+  transferQuiz:"知识点检测：转入14N",
+  drawG1:"第1代：学生绘制复制结果",
+  g1Drag:"第1代：等待取样",
+  predG1:"第1代：假说预测",
+  g1Done:"第1代：离心验证完成",
+  quizG1:"知识点检测：排除假说",
+  drawG2:"第2代：学生绘制复制结果",
+  g2Drag:"第2代：等待取样",
+  predG2:"第2代：假说预测",
+  g2Done:"第2代：离心验证完成",
+  quizG2:"知识点检测：中带数量",
+  drawG3:"第3代：学生绘制复制结果",
+  g3Drag:"第3代：等待取样",
+  g3Done:"第3代：离心验证完成",
+  finalQuiz:"终极追问",
+  complete:"实验完成"
+};
+
+const questions = {
+  transfer:{
+    title:"知识点检测：为什么要把大肠杆菌从 15N 培养基转移到 14N 培养基中？",
+    options:[
+      {text:"A. 为了让 DNA 停止复制，方便观察。", ok:false, fb:"DNA并没有停止复制，实验正是要观察DNA继续复制后的同位素分布。"},
+      {text:"B. 利用同位素质量差，区分亲代DNA链与新合成DNA链。", ok:true, fb:"正确！15N链较重，14N链较轻，二者会使DNA分子的密度不同，从而形成不同条带。"},
+      {text:"C. 因为 14N 环境更适合大肠杆菌繁殖。", ok:false, fb:"不是本实验的关键目的。转入14N主要是为了给新合成链提供轻同位素标记。"}
+    ],
+    next:"开始第1代复制绘制",
+    onCorrect:()=>startDrawing(1)
+  },
+  g1:{
+    title:"知识点检测：第一代离心后只出现一条“中带”，排除了哪种复制假说？",
+    options:[
+      {text:"A. 全保留复制", ok:true, fb:"正确！全保留复制预测第1代会出现重带和轻带两条带，而实验只有一条中带，所以排除全保留复制。"},
+      {text:"B. 半保留复制", ok:false, fb:"半保留复制预测第1代正好是一条中带，不能排除。"},
+      {text:"C. 分散复制", ok:false, fb:"分散复制第1代也可能是一条中带，所以第1代结果还不能排除分散复制。"},
+      {text:"D. 三种假说都被排除", ok:false, fb:"实验结果至少支持半保留复制和分散复制的第1代预测。"}
+    ],
+    next:"继续第2代复制绘制",
+    onCorrect:()=>startDrawing(2)
+  },
+  g2:{
+    title:"知识点检测：第二代离心后出现一条“中带”和一条“轻带”。继续繁殖到第 n 代，以一个亲代DNA分子为单位看，中带中的DNA分子数会如何变化？",
+    options:[
+      {text:"A. 越来越少，直至彻底消失。", ok:false, fb:"比例会越来越低，但含15N旧链的杂合DNA分子数不会消失。"},
+      {text:"B. 越来越多，与轻带数量一样。", ok:false, fb:"轻带数量会不断增加，中带分子数不会与轻带始终一样。"},
+      {text:"C. 始终保持两个。", ok:true, fb:"正确！一个亲代DNA分子含两条15N旧链，半保留复制后这两条旧链分别保留在两个杂合DNA分子中，之后中带分子数保持2个，比例逐代下降。"}
+    ],
+    next:"继续第3代复制绘制",
+    onCorrect:()=>startDrawing(3)
+  },
+  final:{
+    title:"终极追问：若第3代共有8个DNA分子，按半保留复制，理论上中带与轻带的分子数比是多少？",
+    options:[
+      {text:"A. 1 : 1", ok:false, fb:"这是第2代的比例，不是第3代。"},
+      {text:"B. 1 : 3", ok:true, fb:"正确！第3代有2个杂合DNA分子、6个轻DNA分子，所以中带:轻带 = 2:6 = 1:3。"},
+      {text:"C. 3 : 1", ok:false, fb:"轻带会越来越多，不是中带更多。"},
+      {text:"D. 只有中带，没有轻带。", ok:false, fb:"第2代开始就出现轻带，之后轻带比例继续增加。"}
+    ],
+    next:"查看实验总结",
+    onCorrect:()=>showSummary()
+  }
+};
+
+const tubeBands = {
+  g0:[{type:"heavy", label:"重带 15N/15N"}],
+  g1:[{type:"middle", label:"中带 15N/14N"}],
+  g2:[{type:"middle", label:"中带"}, {type:"light", label:"轻带"}],
+  g3:[{type:"middle", label:"中带 2个"}, {type:"light", label:"轻带 6个"}],
+  g1Conservative:[{type:"heavy", label:"重带"}, {type:"light", label:"轻带"}],
+  g2Conservative:[{type:"heavy", label:"重带弱"}, {type:"light", label:"轻带强"}],
+  g2Dispersive:[{type:"middleLight", label:"偏轻中带"}]
+};
+
+const predictionCorrect = {
+  1:{
+    conservative:"heavyLight",
+    semiconservative:"middle",
+    dispersive:"middle"
+  },
+  2:{
+    conservative:"heavyLight",
+    semiconservative:"middleLightBand",
+    dispersive:"middleShift"
+  }
+};
+
+const predictionOptions = [
+  {key:"heavy", label:"一条重带"},
+  {key:"middle", label:"一条中带"},
+  {key:"light", label:"一条轻带"},
+  {key:"heavyLight", label:"重带 + 轻带"},
+  {key:"middleLightBand", label:"中带 + 轻带"},
+  {key:"middleShift", label:"一条偏轻中带"}
+];
+
+const $ = (id)=>document.getElementById(id);
+
+function toast(msg){
+  const t=$("toast");
+  t.textContent=msg;
+  t.classList.add("show");
+  clearTimeout(window.toastTimer);
+  window.toastTimer=setTimeout(()=>t.classList.remove("show"),2600);
+}
+
+function setPhase(phase){
+  app.phase=phase;
+  $("stagePill").textContent=phaseLabels[phase] || phase;
+  renderAIContext();
+}
+
+function renderCultureInitial(){
+  $("cultureTitle").innerHTML='大肠杆菌培养环境：<strong>15N（重同位素）</strong>';
+  const sample = makeSampleCard("g0","第0代DNA样品","两条链均为15N，拖入离心管验证。", [["blue","blue"]]);
+  $("cultureDisplay").innerHTML="";
+  $("cultureDisplay").appendChild(sample);
+  $("instruction").textContent="请将“第0代DNA样品”拖入右侧密度梯度离心结果验证区。";
+  $("workspace").innerHTML="";
+  setPhase("g0Drag");
+  clearTube();
+  app.loadedSample=null;
+  updateDropZone();
+  $("centrifugeBtn").disabled=true;
+  $("verifyPill").textContent="等待取样";
+}
+
+function makeDna(pair,size="small"){
+  const wrap=document.createElement("div");
+  wrap.className="dna-molecule "+size;
+  const s1=document.createElement("div");
+  s1.className="strand "+pair[0];
+  const s2=document.createElement("div");
+  s2.className="strand "+pair[1];
+  wrap.appendChild(s1);wrap.appendChild(s2);
+  for(let i=1;i<=5;i++){
+    const r=document.createElement("div");
+    r.className="rung r"+i;
+    wrap.appendChild(r);
+  }
+  return wrap;
+}
+
+function makeSampleCard(gen,label,desc,molecules){
+  const card=document.createElement("div");
+  card.className="sample-card";
+  card.draggable=true;
+  card.dataset.sample=gen;
+  card.addEventListener("dragstart",e=>{
+    e.dataTransfer.setData("text/plain",gen);
+  });
+  card.addEventListener("click",()=>loadSample(gen,label));
+  const dnaBox=document.createElement("div");
+  dnaBox.style.display="flex";
+  dnaBox.style.gap="6px";
+  dnaBox.style.alignItems="center";
+  molecules.slice(0,4).forEach(pair=>dnaBox.appendChild(makeDna(pair,"tiny")));
+  const txt=document.createElement("div");
+  txt.className="sample-text";
+  txt.innerHTML=`<strong>${label}</strong><span>${desc}<br>可拖拽，也可点击快速装入。</span>`;
+  card.appendChild(dnaBox);
+  card.appendChild(txt);
+  return card;
+}
+
+function loadSample(gen,label){
+  const expectedPhase = {
+    g0:"g0Drag",
+    g1:"g1Drag",
+    g2:"g2Drag",
+    g3:"g3Drag"
+  };
+  if(app.phase!==expectedPhase[gen]){
+    toast("当前阶段还不能装入这个样品，请按照左侧提示继续。");
+    return;
+  }
+  app.loadedSample=gen;
+  $("dropZone").innerHTML=`<strong>已装入：</strong>${label || sampleLabel(gen)}<br><span style="color:#9dadc6">点击“启动离心机”进入验证。</span>`;
+  $("dropZone").classList.add("ready");
+  $("centrifugeBtn").disabled=false;
+  $("verifyPill").textContent="样品已装入";
+}
+
+function sampleLabel(gen){
+  return gen==="g0"?"第0代DNA样品":gen==="g1"?"第1代复制后样品":gen==="g2"?"第2代复制后样品":"第3代复制后样品";
+}
+
+function updateDropZone(){
+  $("dropZone").classList.remove("ready");
+  $("dropZone").innerHTML="将左侧DNA样品拖到这里，或点击样品卡片快速装入试管。";
+}
+
+$("dropZone").addEventListener("dragover",e=>{
+  e.preventDefault();
+  $("dropZone").classList.add("ready");
+});
+$("dropZone").addEventListener("dragleave",()=>{
+  if(!app.loadedSample) $("dropZone").classList.remove("ready");
+});
+$("dropZone").addEventListener("drop",e=>{
+  e.preventDefault();
+  const gen=e.dataTransfer.getData("text/plain");
+  loadSample(gen,sampleLabel(gen));
+});
+
+function clearTube(){
+  $("tube").querySelectorAll(".band").forEach(b=>b.remove());
+  $("rpmValue").textContent="0";
+  $("tube").classList.remove("spin");
+}
+
+function showBands(key){
+  clearTube();
+  const bands = tubeBands[key] || [];
+  bands.forEach((b,idx)=>{
+    const div=document.createElement("div");
+    div.className="band "+b.type;
+    div.textContent=b.label;
+    div.style.animationDelay=(idx*.12)+"s";
+    $("tube").appendChild(div);
+  });
+}
+
+function startCentrifuge(){
+  if(!app.loadedSample){
+    toast("请先把样品装入离心管。");
+    return;
+  }
+  const sample=app.loadedSample;
+  $("centrifugeBtn").disabled=true;
+  $("verifyPill").textContent="离心中...";
+  $("tube").classList.add("spin");
+  let rpm=0;
+  const timer=setInterval(()=>{
+    rpm += 800 + Math.round(Math.random()*900);
+    if(rpm>12000) rpm=12000;
+    $("rpmValue").textContent=rpm;
+  },90);
+  setTimeout(()=>{
+    clearInterval(timer);
+    $("rpmValue").textContent="12000";
+    $("tube").classList.remove("spin");
+    if(sample==="g0") completeG0();
+    if(sample==="g1") completeG1();
+    if(sample==="g2") completeG2();
+    if(sample==="g3") completeG3();
+    app.loadedSample=null;
+    updateDropZone();
+    $("verifyPill").textContent="验证完成";
+    celebrate(18);
+  },1550);
+}
+$("centrifugeBtn").addEventListener("click",()=>{
+  if(app.phase==="g1Drag"){ showPrediction(1); return; }
+  if(app.phase==="g2Drag"){ showPrediction(2); return; }
+  startCentrifuge();
+});
+
+function completeG0(){
+  showBands("g0");
+  app.history.g0=true; renderHistory();
+  setPhase("g0Done");
+  $("resultNote").innerHTML="<strong>第0代结果：</strong>出现一条靠下的蓝色重带，说明DNA均为15N/15N。";
+  $("workspace").innerHTML=`
+    <div class="dialog">
+      <h3>下一步：转入 14N 培养基</h3>
+      <p>现在让大肠杆菌从 15N 培养基转移到 14N 培养基中，使之后新合成的DNA链带有14N标记。</p>
+      <button class="warn" onclick="showQuiz('transfer')">在14N培养基中复制1次</button>
+    </div>`;
+}
+
+function completeG1(){
+  showBands("g1");
+  app.history.g1=true; renderHistory();
+  setPhase("g1Done");
+  $("resultNote").innerHTML="<strong>第1代结果：</strong>只出现一条中带，说明所有DNA分子密度相同，介于15N/15N和14N/14N之间。";
+  $("workspace").innerHTML=`
+    <div class="dialog">
+      <h3>观察结果</h3>
+      <p>第1代只有一条“中带”。它能排除哪一种复制假说？</p>
+      <button class="success" onclick="showQuiz('g1')">进入知识点检测</button>
+    </div>`;
+}
+
+function completeG2(){
+  showBands("g2");
+  app.history.g2=true; renderHistory();
+  setPhase("g2Done");
+  $("resultNote").innerHTML="<strong>第2代结果：</strong>出现一条中带和一条轻带。这是区分半保留复制与分散复制的关键证据。";
+  $("workspace").innerHTML=`
+    <div class="dialog">
+      <h3>关键证据出现</h3>
+      <p>如果是分散复制，第2代应仍是一条偏轻中带；但实际出现了“中带 + 轻带”。</p>
+      <button class="success" onclick="showQuiz('g2')">进入知识点检测</button>
+    </div>`;
+}
+
+function completeG3(){
+  showBands("g3");
+  app.history.g3=true; renderHistory();
+  setPhase("g3Done");
+  $("resultNote").innerHTML="<strong>第3代结果：</strong>仍然是中带和轻带，但轻带更强；中带分子数保持2个，所占比例继续下降。";
+  $("workspace").innerHTML=`
+    <div class="dialog">
+      <h3>第3代验证</h3>
+      <p>第3代共有8个DNA分子，其中2个为15N/14N杂合DNA，6个为14N/14N轻DNA。</p>
+      <button class="success" onclick="showQuiz('final')">回答终极追问</button>
+    </div>`;
+}
+
+function renderHistory(){
+  const h=$("history");
+  const items=[
+    {key:"g0",title:"第0代",bands:"g0"},
+    {key:"g1",title:"第1代",bands:"g1"},
+    {key:"g2",title:"第2代",bands:"g2"},
+    {key:"g3",title:"第3代",bands:"g3"}
+  ];
+  h.innerHTML="";
+  items.forEach(item=>{
+    const card=document.createElement("div");
+    card.className="mini-tube-card";
+    card.innerHTML=`<strong>${item.title}</strong><div class="mini-tube"></div>`;
+    const mt=card.querySelector(".mini-tube");
+    if(app.history[item.key]){
+      tubeBands[item.bands].forEach(b=>{
+        const mb=document.createElement("div");
+        mb.className="mini-band "+b.type;
+        mt.appendChild(mb);
+      });
+    }
+    h.appendChild(card);
+  });
+}
+
+function showQuiz(key){
+  const q=questions[key];
+  setPhase(key==="transfer"?"transferQuiz":key==="g1"?"quizG1":key==="g2"?"quizG2":"finalQuiz");
+  const box=$("workspace");
+  box.innerHTML=`
+    <div class="dialog">
+      <h3>${q.title}</h3>
+      <div class="quiz-options" id="quizOptions"></div>
+      <div class="feedback" id="quizFeedback">请选择一个答案。</div>
+      <div class="toolbar">
+        <button class="success hidden" id="quizNextBtn">${q.next}</button>
+      </div>
+    </div>`;
+  const opts=$("quizOptions");
+  q.options.forEach((opt,i)=>{
+    const btn=document.createElement("button");
+    btn.textContent=opt.text;
+    btn.addEventListener("click",()=>{
+      const stat = app.quizStats[key];
+      if(stat && !stat.correct){
+        stat.attempts += 1;
+      }
+      document.querySelectorAll("#quizOptions button").forEach(b=>b.classList.remove("correct","wrong"));
+      btn.classList.add(opt.ok?"correct":"wrong");
+      const fb=$("quizFeedback");
+      fb.textContent=opt.fb;
+      fb.className="feedback "+(opt.ok?"good":"bad");
+      if(opt.ok){
+        if(stat && !stat.correct){
+          stat.correct = true;
+          stat.firstTry = stat.attempts === 1;
+        }
+        $("quizNextBtn").classList.remove("hidden");
+        celebrate(10);
+      }
+    });
+    opts.appendChild(btn);
+  });
+  $("quizNextBtn").addEventListener("click",q.onCorrect);
+}
+
+function startDrawing(gen){
+  app.drawGen=gen;
+  setPhase("drawG"+gen);
+  $("cultureTitle").innerHTML=`大肠杆菌培养环境：<strong>14N（轻同位素） · 第${gen}次复制</strong>`;
+  $("cultureDisplay").innerHTML="";
+  $("instruction").textContent="选择15N或14N原料笔，点击每条DNA链完成绘制。绘制后点击“完成复制”。";
+
+  const count=Math.pow(2,gen);
+  app.drawn=Array.from({length:count},()=>["empty","empty"]);
+  const box=$("workspace");
+  box.innerHTML=`
+    <div class="dialog">
+      <h3>学生绘制区：第${gen}次复制后的DNA</h3>
+      <p>请根据你对复制方式的理解，使用 <strong style="color:#5aa0ff">15N蓝色笔</strong> 和 <strong style="color:#ffd06a">14N黄色笔</strong>，给每个DNA分子的两条链着色。</p>
+      <div class="pen-row">
+        <button class="pen pen-blue active" data-pen="blue">15N 原料笔</button>
+        <button class="pen pen-yellow" data-pen="yellow">14N 原料笔</button>
+        <button class="ghost" id="clearDrawBtn">清空绘制</button>
+        <button class="ghost" id="autoSemiBtn">AI提示：显示半保留示例</button>
+      </div>
+      <div class="draw-grid" id="drawGrid"></div>
+      <div class="toolbar">
+        <button class="success" id="finishDrawBtn">完成复制</button>
+      </div>
+      <div class="feedback" id="drawFeedback">说明：本环节不是直接判分，而是让同学先形成自己的模型预测，再用离心实验验证。</div>
+    </div>`;
+  renderDrawGrid();
+  document.querySelectorAll(".pen").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      app.currentPen=btn.dataset.pen;
+      document.querySelectorAll(".pen").forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active");
+    });
+  });
+  $("clearDrawBtn").addEventListener("click",()=>{
+    app.drawn=Array.from({length:count},()=>["empty","empty"]);
+    renderDrawGrid();
+  });
+  $("autoSemiBtn").addEventListener("click",()=>fillSemiConservativeExample(gen));
+  $("finishDrawBtn").addEventListener("click",finishDrawing);
+}
+
+function renderDrawGrid(){
+  const grid=$("drawGrid");
+  if(!grid) return;
+  grid.innerHTML="";
+  app.drawn.forEach((pair,idx)=>{
+    const card=document.createElement("div");
+    card.className="draw-card";
+    const dna=document.createElement("div");
+    dna.className="dna-molecule small";
+    pair.forEach((color,si)=>{
+      const s=document.createElement("div");
+      s.className="strand "+color;
+      s.dataset.idx=idx;
+      s.dataset.si=si;
+      s.addEventListener("click",()=>{
+        app.drawn[idx][si]=app.currentPen;
+        renderDrawGrid();
+      });
+      dna.appendChild(s);
+    });
+    for(let i=1;i<=5;i++){
+      const r=document.createElement("div");
+      r.className="rung r"+i;
+      dna.appendChild(r);
+    }
+    const label=document.createElement("label");
+    label.textContent=`DNA ${idx+1}`;
+    card.appendChild(dna);
+    card.appendChild(label);
+    grid.appendChild(card);
+  });
+}
+
+function fillSemiConservativeExample(gen){
+  if(app.drawStats[gen]) app.drawStats[gen].usedHint = true;
+  const count=Math.pow(2,gen);
+  let arr=[];
+  if(gen===1){
+    arr=[["blue","yellow"],["blue","yellow"]];
+  }else{
+    arr.push(["blue","yellow"],["blue","yellow"]);
+    for(let i=2;i<count;i++) arr.push(["yellow","yellow"]);
+  }
+  app.drawn=arr;
+  renderDrawGrid();
+  $("drawFeedback").textContent="AI提示已给出半保留复制的一个示例。课堂中也可以先让学生独立绘制，再展示此提示。";
+  $("drawFeedback").className="feedback good";
+}
+
+function finishDrawing(){
+  const incomplete=app.drawn.some(pair=>pair.includes("empty"));
+  if(incomplete){
+    $("drawFeedback").textContent="还有未着色的DNA链，请先完成所有链的绘制。";
+    $("drawFeedback").className="feedback bad";
+    return;
+  }
+  const gen=app.drawGen;
+  if(app.drawStats[gen]) app.drawStats[gen].completed = true;
+  const pairs=app.drawn.map(pair=>pair.map(c=>c==="blue"?"blue":"yellow"));
+  const sample=makeSampleCard("g"+gen,`第${gen}代复制后样品`,"将你的模型预测拖入右侧离心管验证。",pairs);
+  $("cultureDisplay").innerHTML="";
+  $("cultureDisplay").appendChild(sample);
+  $("instruction").textContent=`第${gen}代复制绘制完成。请将样品拖入右侧密度梯度离心结果验证区。`;
+  $("workspace").innerHTML=`
+    <div class="dialog">
+      <h3>绘制已完成</h3>
+      <p>现在把你绘制好的第${gen}代DNA样品拖入右侧验证区。离心前，系统会请你先完成“假说结果预测”。</p>
+      <p style="color:#9dadc6">移动端或触控屏可直接点击上方样品卡片完成装入。</p>
+    </div>`;
+  setPhase("g"+gen+"Drag");
+  app.loadedSample=null;
+  updateDropZone();
+  $("centrifugeBtn").disabled=true;
+}
+
+function showPrediction(gen){
+  if(!app.loadedSample){
+    toast("请先装入样品。");
+    return;
+  }
+  app.predictionSelections={};
+  setPhase("predG"+gen);
+  $("centrifugeBtn").disabled=true;
+  $("verifyPill").textContent="等待预测";
+  const title = gen===1 ? "第1代离心前：假说结果预测" : "第2代离心前：假说结果预测";
+  const rows=[
+    {key:"conservative",name:"全保留复制"},
+    {key:"semiconservative",name:"半保留复制"},
+    {key:"dispersive",name:"分散复制"}
+  ];
+  $("workspace").innerHTML=`
+    <div class="dialog">
+      <h3>${title}</h3>
+      <p>请先预测：如果DNA分别按三种方式复制，离心后应出现什么条带？全部选择正确后，才能启动离心机验证真实结果。</p>
+      <div class="prediction-grid" id="predictionGrid"></div>
+      <div class="toolbar">
+        <button class="success" id="checkPredictionBtn">检查预测</button>
+        <button class="primary hidden" id="realCentrifugeBtn">预测正确，开始离心</button>
+      </div>
+      <div class="feedback" id="predictionFeedback">请为三种假说各选择一个条带结果。</div>
+    </div>`;
+  const grid=$("predictionGrid");
+  rows.forEach(row=>{
+    const div=document.createElement("div");
+    div.className="prediction-row";
+    div.dataset.row=row.key;
+    div.innerHTML=`<strong>${row.name}</strong><div class="choice-buttons"></div>`;
+    const choices=div.querySelector(".choice-buttons");
+    predictionOptions.forEach(opt=>{
+      const btn=document.createElement("button");
+      btn.textContent=opt.label;
+      btn.addEventListener("click",()=>{
+        app.predictionSelections[row.key]=opt.key;
+        div.querySelectorAll("button").forEach(b=>b.classList.remove("selected"));
+        btn.classList.add("selected");
+      });
+      choices.appendChild(btn);
+    });
+    grid.appendChild(div);
+  });
+  $("checkPredictionBtn").addEventListener("click",()=>checkPrediction(gen));
+  $("realCentrifugeBtn").addEventListener("click",()=>{
+    setPhase("g"+gen+"Drag");
+    startCentrifuge();
+  });
+}
+
+function checkPrediction(gen){
+  const correct=predictionCorrect[gen];
+  if(app.predictionStats[gen]) app.predictionStats[gen].checks += 1;
+  let all=true;
+  document.querySelectorAll(".prediction-row").forEach(row=>{
+    const key=row.dataset.row;
+    row.classList.remove("good","bad");
+    if(app.predictionSelections[key]===correct[key]){
+      row.classList.add("good");
+    }else{
+      row.classList.add("bad");
+      all=false;
+    }
+  });
+  const fb=$("predictionFeedback");
+  if(all){
+    if(app.predictionStats[gen]) app.predictionStats[gen].correct = true;
+    fb.className="feedback good";
+    fb.textContent = gen===1
+      ? "预测正确！第1代：全保留为重带+轻带；半保留和分散复制都为一条中带。"
+      : "预测正确！第2代：全保留为重带+轻带；半保留为中带+轻带；分散复制为一条偏轻中带。";
+    $("realCentrifugeBtn").classList.remove("hidden");
+    celebrate(12);
+  }else{
+    fb.className="feedback bad";
+    fb.textContent = gen===1
+      ? "还有预测不正确。提示：第1代中，半保留复制和分散复制都可能得到一条中带，而全保留复制不会出现中带。"
+      : "还有预测不正确。提示：第2代是区分半保留与分散复制的关键：半保留会分成中带和轻带，分散复制仍只有一条偏轻中带。";
+  }
+}
+
+function buildClassEvaluationHTML(){
+  const qs = app.quizStats;
+  const ps = app.predictionStats;
+  const ds = app.drawStats;
+
+  const quizKeys = ["transfer","g1","g2","final"];
+  const firstTryCount = quizKeys.filter(k=>qs[k] && qs[k].firstTry).length;
+  const quizCorrectCount = quizKeys.filter(k=>qs[k] && qs[k].correct).length;
+  const predictionFast = (ps[1]?.correct && ps[1]?.checks === 1 ? 1 : 0) + (ps[2]?.correct && ps[2]?.checks === 1 ? 1 : 0);
+  const predictionDone = (ps[1]?.correct ? 1 : 0) + (ps[2]?.correct ? 1 : 0);
+  const hintUsedCount = [1,2,3].filter(g=>ds[g]?.usedHint).length;
+  const drawingDone = [1,2,3].filter(g=>ds[g]?.completed).length;
+
+  let score = 40;
+  score += quizCorrectCount * 7;
+  score += firstTryCount * 4;
+  score += predictionDone * 8;
+  score += predictionFast * 4;
+  score += drawingDone * 4;
+  score -= hintUsedCount * 2;
+  score = Math.max(60, Math.min(100, score));
+
+  const strengths = [];
+  const weaknesses = [];
+  const plan = [];
+
+  strengths.push("能完整经历探究流程：从15N标记培养、拖拽取样、启动离心，到假说预测和证据验证，探究链较完整。");
+
+  if(firstTryCount >= 3){
+    strengths.push("基础概念掌握较好：能较快判断同位素标记、条带位置和代际变化之间的关系。");
+  }else{
+    weaknesses.push("同位素标记与条带位置的对应关系还需巩固：15N链较重、14N链较轻，条带位置由DNA分子整体密度决定。");
+  }
+
+  if(predictionFast >= 2){
+    strengths.push("假说演绎能力突出：能把全保留、半保留、分散复制三种模型转化为第1代和第2代条带预测。");
+  }else if(predictionDone >= 1){
+    strengths.push("能在反馈后修正预测：说明已经开始用证据比较不同假说。");
+    weaknesses.push("从模型图到离心条带的转换仍需练习：建议先判断DNA分子类型，再判断条带数量和位置。");
+  }else{
+    weaknesses.push("假说预测环节需要重点补强：要把三种复制方式的分子图与离心条带一一对应。");
+  }
+
+  if(hintUsedCount === 0){
+    strengths.push("独立建模意识强：能不依赖示例完成第1—3代DNA链绘制。");
+  }else if(hintUsedCount <= 1){
+    strengths.push("能合理借助支架修正模型：在关键节点使用提示，有助于形成正确的链追踪方法。");
+  }else{
+    weaknesses.push("DNA链追踪过程还不够熟练：建议课后用蓝黄笔反复画出亲代到第3代，并标注每条链来自哪一代。");
+  }
+
+  if((qs.g1?.attempts || 0) > 1){
+    weaknesses.push("第1代证据的排除范围需要厘清：一条中带可以排除全保留复制，但还不能区分半保留复制和分散复制。");
+  }
+
+  if((qs.g2?.attempts || 0) > 1 || (qs.final?.attempts || 0) > 1){
+    weaknesses.push("“中带分子数”和“中带比例”容易混淆：中带分子数可保持不变，但其比例会随复制代数增加而下降。");
+  }
+
+  if(weaknesses.length === 0){
+    weaknesses.push("当前薄弱点不明显，可挑战更高阶迁移：推导第n代中带、轻带的分子数和比例，并解释原因。");
+  }
+
+  plan.push("第1步：重画模型。用蓝色表示15N旧链、黄色表示14N新链，从亲代画到第3代，每条链旁标注“旧链/新链”。");
+  plan.push("第2步：重做预测表。列出全保留、半保留、分散复制在第1代和第2代的条带结果。");
+  plan.push("第3步：练习证据推理。使用句式：“如果是____复制，则应出现____；实际观察到____；因此____。”");
+  plan.push("第4步：完成迁移题。从1个亲代DNA开始，第n代共有多少个DNA分子？中带和轻带分别有多少个？先画图再写式子。");
+
+  const list = arr => arr.map(x=>`<li>${x}</li>`).join("");
+  const level = score >= 90 ? "探究表现优秀" : score >= 78 ? "探究表现良好" : "探究链基本完成，建议课后巩固";
+
+  return `
+    <div class="evaluation-card">
+      <div class="evaluation-title">
+        <h3>📊 课堂评价：优势与查漏补缺建议</h3>
+        <span class="score-badge">${level} · ${score}分</span>
+      </div>
+      <div class="score-bar"><div class="score-fill" style="width:${score}%"></div></div>
+      <div class="eval-grid">
+        <div class="eval-box">
+          <h4>🌟 本节课表现出的优势</h4>
+          <ul>${list(strengths)}</ul>
+        </div>
+        <div class="eval-box">
+          <h4>🔍 需要课后补强的薄弱环节</h4>
+          <ul>${list(weaknesses)}</ul>
+        </div>
+      </div>
+      <div class="eval-plan">
+        <h4>🧭 课后有逻辑地查漏补缺</h4>
+        <ol>${list(plan)}</ol>
+      </div>
+      <p class="subtitle" style="margin-top:12px;">说明：该评价依据本次网页中的选择题尝试、假说预测检查、绘图支架使用情况生成，适合投屏后让学生自评，也适合写入学习单。</p>
+    </div>`;
+}
+
+function showSummary(){
+  setPhase("complete");
+  $("workspace").innerHTML=`
+    <div class="dialog">
+      <h3>实验总结：DNA复制方式为半保留复制</h3>
+      <p><strong>证据1：</strong>第1代只有一条中带，排除全保留复制。</p>
+      <p><strong>证据2：</strong>第2代出现“中带 + 轻带”，排除分散复制，支持半保留复制。</p>
+      <p><strong>规律：</strong>从第2代起，中带中的DNA分子数保持2个，轻带分子数逐代增加，中带比例逐代下降。</p>
+      ${buildClassEvaluationHTML()}
+      <div class="toolbar">
+        <button class="primary" onclick="restart()">重新开始实验</button>
+      </div>
+    </div>`;
+  $("resultNote").innerHTML="<strong>结论：</strong>亲代DNA的每条链都作为模板，分别进入两个子代DNA分子，因此DNA复制是半保留复制。请结合课堂评价完成课后查漏补缺。";
+  celebrate(28);
+}
+
+function restart(){
+  app.history={};
+  app.quizStats={
+    transfer:{attempts:0, correct:false, firstTry:false},
+    g1:{attempts:0, correct:false, firstTry:false},
+    g2:{attempts:0, correct:false, firstTry:false},
+    final:{attempts:0, correct:false, firstTry:false}
+  };
+  app.predictionStats={
+    1:{checks:0, correct:false},
+    2:{checks:0, correct:false}
+  };
+  app.drawStats={
+    1:{completed:false, usedHint:false},
+    2:{completed:false, usedHint:false},
+    3:{completed:false, usedHint:false}
+  };
+  renderHistory();
+  renderCultureInitial();
+  $("resultNote").innerHTML="提示：15N 标记的 DNA 密度较大，离心后条带更靠下；14N 标记的 DNA 密度较小，条带更靠上。";
+}
+
+function renderAIContext(){
+  const ai=$("aiOutput");
+  if(!ai || ai.dataset.manual==="true") return;
+}
+
+function aiHint(){
+  const hints={
+    g0Drag:"提示：先验证亲代DNA是否真的被15N标记。观察条带位置：越靠下，密度越大。",
+    g0Done:"提示：转入14N后，新合成的DNA链会带有14N标记，这是后续区分新旧链的关键。",
+    transferQuiz:"提示：这道题的核心词是“同位素质量差”和“区分亲代链/新链”。",
+    drawG1:"提示：第一代复制时，15N旧链是否会和14N新链结合？请先画出你的预测。",
+    g1Drag:"提示：拖入样品前先想一想：你画出的DNA分子整体密度会对应重带、中带还是轻带？",
+    predG1:"提示：第1代如果只看到中带，只能排除一种假说；另两种还需要第2代继续区分。",
+    g1Done:"提示：第1代只有中带，说明没有纯重DNA和纯轻DNA同时出现。",
+    drawG2:"提示：第2代复制时，上一代的15N/14N杂合DNA各自复制，会产生哪两类DNA？",
+    predG2:"提示：半保留复制会让含15N旧链的DNA分子和全14N轻DNA分子分开成两条带。",
+    g2Done:"提示：第2代“中带+轻带”是最关键证据，因为它排除了分散复制。",
+    drawG3:"提示：第3代总分子数翻倍到8个；含15N旧链的分子数是否也翻倍？",
+    g3Done:"提示：中带不消失，但比例降低；轻带越来越强。",
+    complete:"提示：用四个词总结本课：模型、预测、证据、结论。"
+  };
+  $("aiOutput").dataset.manual="true";
+  $("aiOutput").textContent="【AI助教提示】\n"+(hints[app.phase] || "先观察、再预测、最后用证据判断。");
+}
+function aiQuestion(){
+  const qs={
+    g0Drag:"如果亲代DNA没有被15N完全标记，初始离心条带可能会怎样影响后续判断？",
+    g0Done:"为什么第0代是重带，而不是中带或轻带？",
+    drawG1:"如果亲代两条链完全不分开，会得到什么条带？这和半保留复制有什么区别？",
+    predG1:"第1代的一条中带，为什么还不能直接证明半保留复制？",
+    g1Done:"第1代结果排除了全保留复制，但为什么还要继续做第2代？",
+    drawG2:"第2代中，哪些DNA分子还含有15N旧链？哪些已经完全由14N链组成？",
+    predG2:"分散复制和半保留复制在第2代的条带数量有什么关键差别？",
+    g2Done:"如果继续培养到第10代，中带会不会完全消失？为什么？",
+    g3Done:"第3代中带更弱，说明中带分子数变少了吗？还是比例变小了？",
+    complete:"请用一句话说明：梅塞尔森和斯塔尔实验如何体现‘假说—演绎’思想？"
+  };
+  $("aiOutput").dataset.manual="true";
+  $("aiOutput").textContent="【AI生成追问】\n"+(qs[app.phase] || "请用“条带数量、条带位置、DNA分子组成”三句话解释当前结果。");
+}
+function aiRecord(){
+  const rec={
+    g0:"第0代：15N培养，离心出现一条重带，说明亲代DNA被15N标记。",
+    g1:"第1代：转入14N培养基复制一次，离心出现一条中带，排除全保留复制。",
+    g2:"第2代：继续复制一次，离心出现中带和轻带，排除分散复制，支持半保留复制。",
+    g3:"第3代：继续复制，仍出现中带和轻带，但轻带比例升高，中带比例下降。"
+  };
+  const lines=[];
+  if(app.history.g0) lines.push(rec.g0);
+  if(app.history.g1) lines.push(rec.g1);
+  if(app.history.g2) lines.push(rec.g2);
+  if(app.history.g3) lines.push(rec.g3);
+  $("aiOutput").dataset.manual="true";
+  $("aiOutput").textContent="【AI生成实验记录】\n"+(lines.length?lines.join("\n"):"尚未获得实验结果。请先完成至少一次离心验证。");
+}
+$("hintBtn").addEventListener("click",aiHint);
+$("questionBtn").addEventListener("click",aiQuestion);
+$("recordBtn").addEventListener("click",aiRecord);
+
+function celebrate(n=12){
+  const box=$("confetti");
+  box.innerHTML="";
+  for(let i=0;i<n;i++){
+    const p=document.createElement("div");
+    p.className="piece";
+    p.style.left=Math.random()*100+"%";
+    p.style.top="-20px";
+    p.style.background=[ "var(--blue)", "var(--yellow)", "var(--purple)", "var(--green)" ][Math.floor(Math.random()*4)];
+    p.style.animationDelay=(Math.random()*.45)+"s";
+    p.style.transform=`rotate(${Math.random()*180}deg)`;
+    box.appendChild(p);
+  }
+  setTimeout(()=>box.innerHTML="",1900);
+}
+
+renderHistory();
+renderCultureInitial();
+</script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"7939e04a4baf43c8b86a560f74aac60e","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"45c2bf8136a245cd97f1c2e9a96c0730","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>
